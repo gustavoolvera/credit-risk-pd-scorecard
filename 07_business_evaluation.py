@@ -207,42 +207,61 @@ print(f"   2. Con perdidas caras ({alto.ratio_L_M:g}x) aportaria ${alto.ganancia
 # =============================================================================
 titulo("PASO 5 — GRAFICAS")
 
-fig, axes = plt.subplots(1, 2, figsize=(14, 5.2))
+plt.rcParams.update({"font.size": 9, "axes.titlesize": 10.5, "axes.labelsize": 9.5})
+COLOR = {"logistic_v1": "#3a4f7a", "xgboost_v1": "#7a3a6a", "lightgbm_v1": "#1f7a5a"}
+ETIQ = {"logistic_v1": "Regresión logística (WoE)", "xgboost_v1": "XGBoost", "lightgbm_v1": "LightGBM"}
+n_val = len(y)
+
+fig, axes = plt.subplots(1, 2, figsize=(14, 5.4))
 
 # --- Beneficio vs umbral ----------------------------------------------------
+# u_opt = M/(M+L) es el umbral de equilibrio: aprobar a un cliente con esa PD
+# tiene beneficio esperado cero. El maximo empirico de cada curva se marca solo
+# como referencia; la politica sigue usando u_opt.
 ax = axes[0]
 us = np.linspace(0.005, 0.6, 300)
 for nombre, pred in predicciones.items():
-    bs = [beneficio(pred, y, u, MARGEN, PERDIDA)["beneficio"] / 1e6 for u in us]
-    ax.plot(us, bs, lw=2, label=nombre)
-ax.axhline(ben_todos / 1e6, ls="--", color="gray", lw=1.5,
-           label=f"sin modelo (${ben_todos/1e6:.2f}M)")
-ax.axvline(u_opt, ls=":", color="#a8392f", lw=2,
-           label=f"umbral optimo = {u_opt:.4f}")
-ax.set_xlabel("Umbral de aprobacion (PD maxima aceptada)")
-ax.set_ylabel("Beneficio (millones de $)")
+    bs = np.array([beneficio(pred, y, u, MARGEN, PERDIDA)["beneficio"] for u in us]) / 1e6
+    etiqueta = ETIQ.get(nombre, nombre) + (" (elegido)" if nombre == nombre_principal else "")
+    ax.plot(us * 100, bs, lw=2.2 if nombre == nombre_principal else 1.5,
+            color=COLOR.get(nombre), alpha=0.85, label=etiqueta)
+    k = int(bs.argmax())
+    ax.plot(us[k] * 100, bs[k], marker="o", ms=5, mfc="white", mec=COLOR.get(nombre), mew=1.5)
+ax.plot([], [], marker="o", ms=5, mfc="white", mec="gray", ls="none",
+        label="máximo observado (referencia)")
+ax.axhline(ben_todos / 1e6, ls="--", color="gray", lw=1.2,
+           label=f"sin modelo: aprobar a todos (\\${ben_todos/1e6:.2f}M)")
+ax.axvline(u_opt * 100, ls=":", color="black", lw=1.5,
+           label=f"umbral de equilibrio M/(M+L) = {u_opt*100:.2f} %")
+ax.set_xlim(0, 40)   # por encima de 40% las curvas solo descienden
+ax.set_xlabel("Umbral de aprobación: PD máxima aceptada (%)")
+ax.set_ylabel("Beneficio (millones de USD)")
 # "\$" evita que matplotlib interprete el texto entre dos "$" como formula.
-ax.set_title(f"Beneficio segun el umbral\n(margen \\${MARGEN}, perdida \\${PERDIDA:,.0f})")
-ax.legend(fontsize=8)
+ax.set_title(f"Beneficio según el umbral — validación (n = {n_val:,})\n"
+             f"margen \\${MARGEN} por préstamo pagado, pérdida \\${PERDIDA:,.0f} por default")
+ax.legend(fontsize=8, loc="lower right", frameon=False)
 ax.grid(alpha=0.3)
 
 # --- Sensibilidad al ratio ---------------------------------------------------
 ax = axes[1]
 x = np.arange(len(sens))
 ancho = 0.38
-ax.bar(x - ancho/2, sens["sin_modelo"] / 1e6, ancho, label="sin modelo", color="#8a8f9c")
-ax.bar(x + ancho/2, sens["con_modelo"] / 1e6, ancho, label="con modelo", color="#2b6247")
+ax.bar(x - ancho/2, sens["sin_modelo"] / 1e6, ancho, label="sin modelo (aprobar a todos)",
+       color="#9a9a9a")
+ax.bar(x + ancho/2, sens["con_modelo"] / 1e6, ancho, label=f"con {ETIQ.get(nombre_principal)}",
+       color=COLOR.get(nombre_principal, "#2b6247"))
 ax.axhline(0, color="black", lw=0.8)
 ax.set_xticks(x)
-ax.set_xticklabels([f"{r:g}x" for r in sens["ratio_L_M"]], fontsize=8)
-ax.set_xlabel("Ratio perdida / ganancia")
-ax.set_ylabel("Beneficio (millones de $)")
-ax.set_title(f"¿Cuando compensa el modelo? ({nombre_principal})")
-ax.legend(fontsize=8)
+ax.set_xticklabels([f"{r:g}×" for r in sens["ratio_L_M"]])
+ax.set_xlabel("Ratio pérdida / margen (L / M), con M = \\$800 fijo")
+ax.set_ylabel("Beneficio (millones de USD)")
+ax.set_title(f"¿Cuándo compensa el modelo? — {ETIQ.get(nombre_principal)}, validación\n"
+             "umbral recalculado en cada escenario: M/(M+L)")
+ax.legend(fontsize=8, loc="upper right", frameon=False)
 ax.grid(alpha=0.3, axis="y")
 
 plt.tight_layout()
-plt.savefig(PLOTS / "07_evaluacion_negocio.png", dpi=110)
+plt.savefig(PLOTS / "07_evaluacion_negocio.png", dpi=130)
 plt.close()
 print(f"  Guardado: {(PLOTS / '07_evaluacion_negocio.png').relative_to(AQUI)}")
 

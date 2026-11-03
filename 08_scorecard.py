@@ -61,6 +61,7 @@ plt.rcParams["axes.unicode_minus"] = False   # signo "-" normal en los ejes
 sys.path.insert(0, str(Path(__file__).parent))
 from src import artifacts
 from src import woe as woe_mod
+from src.evaluation import ic_wilson
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -288,50 +289,114 @@ tabla_bandas.to_csv(METRICAS / "scorecard_bandas.csv")
 # =============================================================================
 titulo("PASO 6 — GRAFICAS")
 
-fig, axes = plt.subplots(1, 3, figsize=(16, 4.8))
+plt.rcParams.update({"font.size": 9, "axes.titlesize": 10.5, "axes.labelsize": 9.5})
+BUENO, MALO = "#2b6247", "#a8392f"
 
+# Descripciones financieras de las variables (los nombres originales siguen en
+# scorecard.csv). Las de conteo son enteras: el bin (1, 3] equivale a "2-3".
+DESCRIPCION = {
+    "RevolvingUtilizationOfUnsecuredLines": "Uso de crédito revolvente",
+    "NumberOfTimes90DaysLate": "Atrasos de 90+ días",
+    "NumberOfTime30-59DaysPastDueNotWorse": "Atrasos de 30-59 días",
+    "NumberOfTime60-89DaysPastDueNotWorse": "Atrasos de 60-89 días",
+    "DebtRatio_limpio": "Ratio deuda / ingreso",
+    "MonthlyIncome": "Ingreso mensual",
+    "age": "Edad",
+    "NumberOfOpenCreditLinesAndLoans": "Líneas de crédito abiertas",
+    "NumberRealEstateLoansOrLines": "Créditos inmobiliarios",
+    "NumberOfDependents": "Dependientes",
+}
+
+
+def etiqueta_atributo(variable, rango):
+    nombre = DESCRIPCION.get(variable, variable)
+    if rango == "FALTANTE":
+        if variable.startswith("NumberOfTime"):
+            return f"{nombre}: sin dato (código 96/98)"
+        if variable.startswith("Revolving"):
+            return f"{nombre}: valor inválido (> 100)"
+        return f"{nombre}: sin dato"
+    a, b = (float(v) for v in rango.strip("(]").split(","))
+    if variable.startswith("Number"):
+        lo = int(np.floor(a)) + 1
+        if np.isinf(b):
+            return f"{nombre}: {lo} o más"
+        hi = int(b)
+        return f"{nombre}: {lo}" if lo == hi else f"{nombre}: {lo}-{hi}"
+    if variable.startswith("Revolving") and np.isinf(b):
+        return f"{nombre}: 1.0 < x ≤ 100"        # >100 se recodifica como inválido
+    if np.isinf(b):
+        return f"{nombre}: > {a:g}"
+    return f"{nombre}: ≤ {b:g}" if a < 0 else f"{nombre}: {a:g} < x ≤ {b:g}"
+
+
+fig, axes = plt.subplots(1, 3, figsize=(18, 5.8), gridspec_kw={"width_ratios": [1, 0.8, 1.25]},
+                         layout="constrained")
+fig.get_layout_engine().set(rect=(0, 0.04, 1, 0.96), w_pad=0.15)
+
+# --- Distribucion del score ---------------------------------------------------
 ax = axes[0]
-ax.hist(score_sumado[y_val == 0], bins=60, alpha=0.7, density=True,
-        color="#2b6247", label="no cayo en mora")
-ax.hist(score_sumado[y_val == 1], bins=60, alpha=0.7, density=True,
-        color="#a8392f", label="si cayo en mora")
-ax.axvline(umbral_score, color="black", ls="--", lw=2,
-           label=f"corte {umbral_score:.0f}")
-ax.set_xlabel("Score"); ax.set_ylabel("Densidad")
-ax.set_title("Distribucion del score"); ax.legend(fontsize=8); ax.grid(alpha=0.3)
+rango_bins = np.linspace(score_sumado.min(), score_sumado.max(), 61)
+for clase, color, etiq in [(0, BUENO, "no cayó en mora"), (1, MALO, "cayó en mora")]:
+    s = score_sumado[y_val.to_numpy() == clase]
+    ax.hist(s, bins=rango_bins, density=True, color=color, alpha=0.35,
+            label=f"{etiq} (n = {len(s):,})")
+    ax.hist(s, bins=rango_bins, density=True, histtype="step", color=color, lw=1.3)
+ax.axvline(umbral_score, color="black", ls="--", lw=1.5,
+           label=f"corte {umbral_score:.0f} = PD {umbral_pd*100:.2f} % (regla económica)")
+ax.set_xlabel("Score (más puntos = menor riesgo)")
+ax.set_ylabel("Densidad")
+ax.set_title(f"Distribución del score — regresión logística WoE\nvalidación (n = {len(y_val):,})")
+ax.legend(fontsize=8, loc="upper left", framealpha=0.95, edgecolor="lightgray")
+ax.grid(alpha=0.3)
 
+# --- Default por banda con IC de Wilson ---------------------------------------
 ax = axes[1]
+n_b = tabla_bandas["n"].to_numpy()
+ev_b = (pd.Series(y_val.to_numpy()).groupby(bandas, observed=True).sum()
+        .reindex(tabla_bandas.index).to_numpy())       # eventos contados, no reconstruidos
+tasa = ev_b / n_b
+lo_b, hi_b = ic_wilson(tasa, n_b)
 x = np.arange(len(tabla_bandas))
-ax.bar(x, tabla_bandas["default_pct"], color="#a8392f")
-ax.set_xticks(x); ax.set_xticklabels(tabla_bandas.index, rotation=45, ha="right", fontsize=8)
-ax.set_ylabel("% default"); ax.set_title("Riesgo por banda de score")
+ax.bar(x, tasa * 100, color=MALO, alpha=0.8, width=0.6)
+ax.errorbar(x, tasa * 100, yerr=[(tasa - lo_b) * 100, (hi_b - tasa) * 100],
+            fmt="none", ecolor="black", capsize=5, lw=1.2)
+for xi, (t, h, n) in enumerate(zip(tasa, hi_b, n_b)):
+    ax.text(xi, h * 100 + 1.2, f"{t*100:.1f} %\nn = {n:,}", ha="center", va="bottom", fontsize=8)
+etiq_bandas = {"<500": "≤ 500", "500-550": "(500, 550]", "550-600": "(550, 600]",
+               "600-650": "(600, 650]", "650-700": "(650, 700]", ">700": "> 700"}
+ax.set_xticks(x)
+ax.set_xticklabels([etiq_bandas.get(str(b), str(b)) for b in tabla_bandas.index])
+ax.set_ylim(0, max(hi_b) * 100 + 12)
+ax.set_xlabel("Banda de score")
+ax.set_ylabel("Tasa de default observada (%)")
+ax.set_title(f"Default por banda de score — IC 95 % de Wilson\nvalidación (n = {n_b.sum():,})")
 ax.grid(alpha=0.3, axis="y")
-for xi, (n, d) in enumerate(zip(tabla_bandas["n"], tabla_bandas["default_pct"])):
-    ax.text(xi, d, f"n={n:,}", ha="center", va="bottom", fontsize=7)
 
+# --- Contribucion de atributos -------------------------------------------------
 ax = axes[2]
 top = scorecard.dropna(subset=["n"]).copy()
-NOMBRE_CORTO = {
-    "RevolvingUtilizationOfUnsecuredLines": "RevolvingUtil",
-    "NumberOfTimes90DaysLate": "90DaysLate",
-    "NumberOfTime30-59DaysPastDueNotWorse": "30-59DaysPastDue",
-    "NumberOfTime60-89DaysPastDueNotWorse": "60-89DaysPastDue",
-    "NumberRealEstateLoansOrLines": "RealEstateLoans",
-    "NumberOfOpenCreditLinesAndLoans": "OpenCreditLines",
-    "NumberOfDependents": "Dependents",
-    "DebtRatio_limpio": "DebtRatio",
-}
-top["rango_corto"] = top["variable"].map(lambda v: NOMBRE_CORTO.get(v, v)) + " " + top["rango"]
+top["etiqueta"] = [etiqueta_atributo(v, r) for v, r in zip(top["variable"], top["rango"])]
 top = top.reindex(top["puntos_rel"].abs().sort_values(ascending=False).index).head(14).iloc[::-1]
-colores = ["#2b6247" if v > 0 else "#a8392f" for v in top["puntos_rel"]]
-ax.barh(range(len(top)), top["puntos_rel"], color=colores)
-ax.set_yticks(range(len(top))); ax.set_yticklabels(top["rango_corto"], fontsize=6.5)
+colores = [BUENO if v > 0 else MALO for v in top["puntos_rel"]]
+ax.barh(range(len(top)), top["puntos_rel"], color=colores, alpha=0.85, height=0.7)
+for yi, v in enumerate(top["puntos_rel"]):
+    ax.text(v - 0.8, yi, f"{v:.1f}", ha="right", va="center", fontsize=7.5)
+ax.set_yticks(range(len(top)))
+ax.set_yticklabels(top["etiqueta"], fontsize=8)
+ax.set_xlim(top["puntos_rel"].min() * 1.15, 2)
 ax.axvline(0, color="black", lw=0.8)
-ax.set_xlabel("Puntos respecto al bin mas frecuente")
-ax.set_title("Atributos que mas mueven el score"); ax.grid(alpha=0.3, axis="x")
+ax.set_xlabel("Puntos frente al rango más frecuente de la variable (0 = rango más común)")
+ax.set_title("Contribución de características al score — regresión logística WoE\n"
+             "14 atributos con mayor diferencia de puntos")
+ax.grid(alpha=0.3, axis="x")
 
-plt.tight_layout()
-plt.savefig(PLOTS / "08_scorecard.png", dpi=110)
+fig.text(0.01, 0.01,
+         "El scorecard corresponde a la regresión logística WoE; el modelo elegido para "
+         "producción es LightGBM. Las diferencias de puntos describen asociación con el "
+         "riesgo, no efectos causales. Las tres barras 'código 96/98' corresponden a los "
+         "mismos 214 clientes.", fontsize=8, color="dimgray")
+plt.savefig(PLOTS / "08_scorecard.png", dpi=130)
 plt.close()
 print(f"  {(PLOTS / '08_scorecard.png').relative_to(AQUI)}")
 
