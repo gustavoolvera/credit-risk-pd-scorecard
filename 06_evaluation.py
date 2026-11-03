@@ -10,12 +10,20 @@ Tres cosas:
      cs-test.csv en el formato de sampleEntry.csv.
 
 POR QUE SE REENTRENA CON TODO AL FINAL
-  Hasta ahora apartamos 30,000 filas de validacion para poder medir sin
-  enganarnos. Pero una vez tomadas TODAS las decisiones (variables,
-  hiperparametros, numero de arboles), esas 30,000 filas ya no tienen que
-  seguir escondidas: son datos etiquetados que el modelo final puede
-  aprovechar. Mas datos, mejor modelo.
-  Lo que NO se puede hacer es volver a mirarlas para decidir algo.
+  Las 30,000 filas de validacion se apartan para medir sin sesgo. Una vez
+  tomadas las decisiones (variables, hiperparametros, numero de arboles), el
+  modelo final las usa tambien para entrenar.
+
+ELECCION DEL MODELO
+  Se hace con una CV 5x5 dentro de train (src/seleccion.py); validacion solo
+  evalua al modelo ya elegido. Esas filas se examinaron durante el desarrollo,
+  asi que no son independientes de todas las decisiones historicas
+  (docs/04_modelado.md §4.7.2).
+
+SALIDAS
+  artifacts/metrics/modelo_elegido.json        <- lo leen 07 y predict.py
+  artifacts/models/final/<modelo>_final.joblib <- modelo reentrenado (150k)
+  artifacts/preprocessors/preprocessor_final.joblib (emparejado con el anterior)
 
 Se ejecuta con:  python 06_evaluation.py
 """
@@ -30,6 +38,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+plt.rcParams["axes.unicode_minus"] = False   # signo "-" normal en los ejes
 
 from sklearn.metrics import (roc_auc_score, roc_curve, average_precision_score,
                              precision_recall_curve)
@@ -38,8 +47,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 from src import preprocessing as pp
 from src import woe as woe_mod
 from src import artifacts
+from src import seleccion
 from src.evaluation import (ks_statistic, gini, error_calibracion,
-                            umbral_optimo, beneficio, validar_submission)
+                            umbral_optimo, beneficio, validar_submission,
+                            diferencia_pareada_cv)
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -49,7 +60,7 @@ pd.set_option("display.width", 220)
 pd.set_option("display.max_columns", 40)
 
 AQUI = Path(__file__).parent
-DATA = AQUI.parent.parent / "data"
+DATA = artifacts.ruta_datos(AQUI)
 PROC = AQUI / "datasets" / "processed"
 MODELOS = AQUI / "artifacts" / "models"
 METRICAS = AQUI / "artifacts" / "metrics"
@@ -98,8 +109,8 @@ for stem, art in modelos.items():
     pred[stem] = art["modelo"].predict_proba(X[art["columnas"]])[:, 1]
 
 # --- Ensemble: promedio de las probabilidades -------------------------------
-# Truco clasico: si los modelos se equivocan en cosas distintas, su promedio
-# se equivoca menos. Cuesta nada probarlo.
+# Promedio simple de probabilidades: reduce el error si los modelos se
+# equivocan en casos distintos.
 if len(pred) == 3:
     pred["ensemble"] = np.mean(list(pred.values()), axis=0)
     NOMBRE["ensemble"] = "Ensemble (promedio)"
@@ -137,8 +148,6 @@ for stem, p in pred.items():
 comp = pd.DataFrame(filas).sort_values("AUC_val", ascending=False).reset_index(drop=True)
 print(comp.to_string(index=False))
 
-print("\n  Gini = 2*AUC - 1. Es la metrica que usa la banca por costumbre;")
-print("  contiene exactamente la misma informacion que el AUC.")
 
 
 # =============================================================================
@@ -146,21 +155,32 @@ print("  contiene exactamente la misma informacion que el AUC.")
 # =============================================================================
 titulo("PASO 3 — CRITERIOS DE DECISION")
 
+fila = {r["modelo"]: r for _, r in comp.iterrows()}
+NOMBRES_BASE = ["LogReg (WoE)", "XGBoost", "LightGBM"]
 criterios = pd.DataFrame([
-    {"criterio": "Poder predictivo (AUC)",   "LogReg": "0.85948", "XGBoost": "0.86633", "LightGBM": "0.86588"},
-    {"criterio": "¿Diferencia significativa?", "LogReg": "-", "XGBoost": "gana a LogReg", "LightGBM": "gana a LogReg"},
-    {"criterio": "Calibracion (error pp)",   "LogReg": "0.53", "XGBoost": "0.34", "LightGBM": "0.39"},
-    {"criterio": "Interpretabilidad",        "LogReg": "TOTAL (scorecard)", "XGBoost": "baja", "LightGBM": "baja"},
-    {"criterio": "Explicable a un regulador","LogReg": "si", "XGBoost": "requiere SHAP", "LightGBM": "requiere SHAP"},
-    {"criterio": "Velocidad de entrenamiento","LogReg": "instantanea", "XGBoost": "1.7s", "LightGBM": "0.4s"},
-    {"criterio": "Complejidad de despliegue", "LogReg": "minima", "XGBoost": "media", "LightGBM": "media"},
-    {"criterio": "Riesgo de sobreajuste",    "LogReg": "muy bajo", "XGBoost": "medio", "LightGBM": "medio-alto"},
+    {"criterio": "AUC validacion", **{n: f"{fila[n]['AUC_val']:.5f}" for n in NOMBRES_BASE}},
+    {"criterio": "AUC CV (media)", **{n: f"{fila[n]['AUC_cv']:.5f}" for n in NOMBRES_BASE}},
+    {"criterio": "Calibracion validacion (pp)", **{n: f"{fila[n]['calib_pp']:.3f}" for n in NOMBRES_BASE}},
+    {"criterio": "Interpretabilidad", "LogReg (WoE)": "scorecard", "XGBoost": "requiere SHAP",
+     "LightGBM": "requiere SHAP"},
 ])
 print(criterios.to_string(index=False))
 
-print("\n  XGBoost y LightGBM son estadisticamente INDISTINGUIBLES entre si")
-print("  (+0.00045, dentro del ruido). La eleccion entre ellos no puede")
-print("  basarse en el AUC: hay que usar los demas criterios.")
+# Diferencias emparejadas sobre los folds de la CV de 05 (mismo calculo que su
+# grafica). Si 05 no se ha ejecutado, se omiten.
+f_folds = METRICAS / "comparacion_modelos_cv_folds.csv"
+pares_cv = {}
+if f_folds.exists():
+    folds = pd.read_csv(f_folds, index_col="fold")
+    n_lab = len(y_val) + len(pd.read_parquet(PROC / "trees" / "train.parquet"))
+    k = len(folds)
+    print(f"\n  Diferencias de AUC emparejadas fold a fold (CV de 05, IC 95% Nadeau-Bengio):")
+    for a, b in [("XGBoost", "LogReg (WoE)"), ("LightGBM", "LogReg (WoE)"), ("XGBoost", "LightGBM")]:
+        r = diferencia_pareada_cv(folds[a], folds[b], n_train=n_lab * (k - 1) / k, n_test=n_lab / k)
+        pares_cv[(a, b)] = r
+        print(f"    {a:<9} - {b:<13} {r['diferencia']:+.5f}  [{r['ic_inf']:+.5f}, {r['ic_sup']:+.5f}]")
+else:
+    print("\n  (sin comparacion_modelos_cv_folds.csv: ejecuta 05 para ver las diferencias pareadas)")
 
 
 # =============================================================================
@@ -168,27 +188,58 @@ print("  basarse en el AUC: hay que usar los demas criterios.")
 # =============================================================================
 titulo("PASO 4 — MODELO ELEGIDO")
 
-# Criterio: entre los que empatan en poder predictivo, gana el mejor
-# calibrado. Las probabilidades calibradas son lo que hace funcionar la
-# regla de negocio umbral = M/(M+L); sin ellas el modelo ordena bien pero
-# no permite decidir cuanto prestar.
-candidatos = comp[comp["modelo"] != "Ensemble (promedio)"]
-mejor_auc = candidatos["AUC_val"].max()
-empatados = candidatos[candidatos["AUC_val"] >= mejor_auc - 0.002]
-elegido_nombre = empatados.sort_values("calib_pp").iloc[0]["modelo"]
-ELEGIDO = [k for k, v in NOMBRE.items() if v == elegido_nombre][0]
+# Regla (docs/04_modelado.md §4.7.2): entre los modelos con AUC medio de CV a
+# menos de 0.002 del mejor, el de menor error de calibracion medio. La CV es
+# 5x5 sobre las 120,000 filas de train; validacion no interviene. XGBoost y
+# LightGBM son estadisticamente indistinguibles: el desempate por calibracion
+# es la regla fijada de antemano, no evidencia de superioridad.
+raw = pd.read_csv(DATA / "cs-training.csv", index_col=0)
+raw.index.name = "row_id"
+X_tr_trees = pd.read_parquet(PROC / "trees" / "train.parquet")
+X_tr_crudo = pp.crear_features(pp.limpiar(raw.loc[X_tr_trees.index].drop(columns=[TARGET])))
+y_tr = X_tr_trees[TARGET]
 
-print(f"  ELEGIDO: {elegido_nombre}")
-print(f"\n  Razonamiento:")
-print(f"   1. XGBoost y LightGBM superan a LogReg de forma consistente")
-print(f"      (+0.0069 y +0.0064, ambas mayores que el ruido).")
-print(f"   2. Entre ellos la diferencia es +0.00045: ruido puro.")
-print(f"   3. Desempate por CALIBRACION, porque de ella depende que la regla")
-print(f"      umbral = M/(M+L) funcione: {elegido_nombre} tiene el menor error.")
-print(f"\n  NOTA PARA UN CONTEXTO REAL: si el modelo tuviera que pasar por un")
-print(f"  comite de riesgo, la regresion logistica seguiria siendo defendible.")
-print(f"  Cuesta 0.007 de AUC (~$5 por solicitud) y a cambio da un scorecard")
-print(f"  que explica cada rechazo. Esa decision es de negocio, no tecnica.")
+print("  CV 5x5 sobre train para la eleccion (~1 min)...")
+cv_sel = seleccion.cv_en_train(X_tr_crudo, X_tr_trees, y_tr, modelos, UMBRAL_NEGOCIO,
+                               MARGEN, PERDIDA)
+cv_sel.to_csv(METRICAS / "seleccion_cv_train.csv", index=False)
+medias_cv = cv_sel.groupby("modelo")[["AUC", "Calib_pp", "Brier", "Benef_sol"]].mean()
+ELEGIDO, elegibles = seleccion.regla_seleccion(medias_cv)
+elegido_nombre = NOMBRE[ELEGIDO]
+
+print(f"\n  {'modelo':<14} {'AUC CV':>9} {'Calib CV (pp)':>14} {'Brier CV':>10}")
+for stem, r in medias_cv.sort_values("AUC", ascending=False).iterrows():
+    marca = "  <- elegido" if stem == ELEGIDO else ("  (elegible)" if stem in elegibles else "")
+    print(f"  {NOMBRE[stem]:<14} {r.AUC:>9.5f} {r.Calib_pp:>14.3f} {r.Brier:>10.5f}{marca}")
+
+n_te = len(y_tr) / 5
+pares_sel = {}
+if len(elegibles) > 1:
+    otro = [m for m in elegibles if m != ELEGIDO][0]
+    A = cv_sel[cv_sel.modelo == ELEGIDO].set_index("fold")
+    B = cv_sel[cv_sel.modelo == otro].set_index("fold")
+    print(f"\n  {elegido_nombre} - {NOMBRE[otro]} (IC 95% Nadeau-Bengio):")
+    for mtr in ["AUC", "Calib_pp", "Brier"]:
+        r = diferencia_pareada_cv(A[mtr], B[mtr], n_train=len(y_tr) - n_te, n_test=n_te)
+        pares_sel[mtr] = r
+        print(f"    {mtr:<9} {r['diferencia']:+.5f}  [{r['ic_inf']:+.5f}, {r['ic_sup']:+.5f}]")
+
+ref = fila["LogReg (WoE)"]
+eleg = fila[elegido_nombre]
+print(f"\n  ELEGIDO: {elegido_nombre}. Evaluacion posterior en validacion: AUC {eleg['AUC_val']:.5f},"
+      f" {(eleg['beneficio_$'] - ref['beneficio_$']) / len(y_val):+.2f} $/solicitud frente a LogReg.")
+
+artifacts.guardar_json({
+    "modelo": ELEGIDO,
+    "nombre": elegido_nombre,
+    "regla": ("AUC_cv >= max - 0.002; desempate por menor Calib_pp medio "
+              "(CV 5x5 sobre las 120,000 filas de train)"),
+    "usa_validacion": False,
+    "elegibles": elegibles,
+    "medias_cv": medias_cv.round(6).reset_index().to_dict("records"),
+    "diferencias_elegibles": {k: {kk: round(vv, 6) for kk, vv in v.items()}
+                              for k, v in pares_sel.items()},
+}, METRICAS / "modelo_elegido.json")
 
 
 # =============================================================================
@@ -198,7 +249,7 @@ titulo("PASO 4B — ¿POR QUE RECHAZA A QUIEN RECHAZA?")
 
 # El problema de elegir un booster: la regresion logistica da un scorecard
 # donde cada rango vale unos puntos fijos, y con eso se le explica a un
-# cliente rechazado exactamente que le resto. Un modelo de 105 arboles no
+# cliente rechazado exactamente que le resto. Un booster de ~100 arboles no
 # tiene esa tabla.
 #
 # SHAP lo resuelve: reparte la prediccion de CADA persona entre sus
@@ -213,12 +264,13 @@ except ImportError:
     _hay_shap = False
     print("  shap no esta instalado (pip install shap). Se omite este paso.")
 
-if _hay_shap:
-    # TreeSHAP solo aplica a ensambles de arboles; se explica el booster con
-    # mejor AUC de validacion. Para la regresion logistica el equivalente es
-    # el scorecard (08_scorecard.py), que ya da atribucion exacta por atributo.
-    stem_shap = comp[comp["modelo"].isin(["XGBoost", "LightGBM"])].iloc[0]["modelo"]
-    stem_shap = [k for k, v in NOMBRE.items() if v == stem_shap][0]
+if _hay_shap and RAMA[ELEGIDO] != "trees":
+    print("  El modelo elegido es la regresion logistica: su explicacion exacta es")
+    print("  el scorecard (08_scorecard.py). TreeSHAP no aplica.")
+elif _hay_shap:
+    # Se explica el modelo ELEGIDO. Se usa la version entrenada con 120,000
+    # filas (la evaluada en validacion), no la reentrenada con 150,000.
+    stem_shap = ELEGIDO
     art_s = modelos[stem_shap]
     Xs = val["trees"].drop(columns=[TARGET])[art_s["columnas"]]
 
@@ -232,14 +284,11 @@ if _hay_shap:
     imp = pd.DataFrame({
         "variable": art_s["columnas"],
         "impacto_medio": np.abs(shap_vals).mean(axis=0),
-    }).sort_values("impacto_medio", ascending=False).reset_index(drop=True)
+    }).sort_values(["impacto_medio", "variable"], ascending=[False, True]).reset_index(drop=True)
     imp["pct"] = (imp["impacto_medio"] / imp["impacto_medio"].sum() * 100).round(2)
 
     print("\n  Impacto medio de cada variable sobre la prediccion:")
     print(imp.head(10).to_string(index=False))
-    print("\n  A diferencia de feature_importances_, esto SI es comparable entre")
-    print("  modelos: mide cuanto mueve cada variable la prediccion, no cuantas")
-    print("  veces la uso el algoritmo para partir.")
 
     # --- Explicacion individual ----------------------------------------------
     p_s = art_s["modelo"].predict_proba(Xs)[:, 1]
@@ -262,9 +311,6 @@ if _hay_shap:
     print(f"\n  Suma de contribuciones + base = {explainer.expected_value + sv.sum():+.4f}")
     print(f"  (en log-odds; equivale a PD = "
           f"{1/(1+np.exp(-(explainer.expected_value + sv.sum())))*100:.1f}%)")
-    print("\n  Contribucion positiva = empuja hacia MORA. Negativa = hacia pagar.")
-    print("  Esto es lo que se le entrega a un regulador que pregunte por que")
-    print("  se rechazo a esta persona concreta.")
 
     # --- Grafica --------------------------------------------------------------
     fig, axes_s = plt.subplots(1, 2, figsize=(15, 5.5))
@@ -344,6 +390,18 @@ if "n_arboles" in art:
 
 modelo_final.fit(X_todo, y_todo)
 print(f"  Reentrenado con {len(X_todo):,} filas ({y_todo.mean()*100:.2f}% de morosos)")
+
+# Se guarda en una subcarpeta para que 07 (que evalua en validacion los
+# *_v1.joblib) no lo cargue: este modelo ya vio las filas de validacion.
+ruta_final = MODELOS / "final" / f"{ELEGIDO}_final.joblib"
+ruta_final.parent.mkdir(parents=True, exist_ok=True)
+for viejo in ruta_final.parent.glob("*_final.joblib"):    # solo un modelo final vigente
+    if viejo != ruta_final:
+        viejo.unlink()
+joblib.dump({"modelo": modelo_final, "columnas": COLS, "rama": rama,
+             "n_filas_train": len(X_todo), "base": f"{ELEGIDO}.joblib",
+             "preprocesador": "preprocessor_final.joblib"}, ruta_final)
+print(f"  Modelo final guardado: {ruta_final.relative_to(AQUI)}")
 
 # --- Congelar el preprocesador que corresponde a ESTE modelo ----------------
 # El artefacto de 02_preprocessing.py se aprendio con 120,000 filas. Si el
@@ -434,8 +492,7 @@ colores = {"logistic_v1": "#3a4f7a", "xgboost_v1": "#7a3a6a",
 ax = axes[0, 0]
 for stem, p in pred.items():
     f, t, _ = roc_curve(y_val, p)
-    ax.plot(f, t, lw=2 if stem == ELEGIDO else 1.3, color=colores[stem],
-            alpha=1.0 if stem == ELEGIDO else 0.75,
+    ax.plot(f, t, lw=2 if stem == ELEGIDO else 1.3, color=colores[stem], alpha=0.7,
             label=f"{NOMBRE[stem]} ({roc_auc_score(y_val, p):.4f})")
 ax.plot([0, 1], [0, 1], "--", color="gray", lw=1)
 ax.set_xlabel("Falsos positivos"); ax.set_ylabel("Verdaderos positivos")
@@ -455,7 +512,8 @@ for stem, p in pred.items():
     d = pd.DataFrame({"p": p, "y": y_val.to_numpy()})
     d["dec"] = pd.qcut(d.p, 10, labels=False)
     g = d.groupby("dec").agg(pp_=("p", "mean"), pr=("y", "mean")) * 100
-    ax.plot(g.pp_, g.pr, "o-", color=colores[stem], lw=1.6, ms=4, label=NOMBRE[stem])
+    ax.plot(g.pp_, g.pr, "o-", color=colores[stem], lw=1.6, ms=4, alpha=0.7,
+            label=NOMBRE[stem])
 lim = 40
 ax.plot([0, lim], [0, lim], "--", color="gray", lw=1, label="calibracion perfecta")
 ax.set_xlim(0, lim); ax.set_ylim(0, lim)

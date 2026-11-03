@@ -3,8 +3,8 @@
 predict.py — Puntuar solicitantes nuevos
 Proyecto: Give Me Some Credit — Probability of Default
 
-Esta es la PUERTA DE ENTRADA de produccion. No entrena nada: carga los
-artefactos congelados y los aplica.
+Inferencia sobre solicitantes nuevos. No entrena nada: carga los artefactos
+guardados y los aplica.
 
     entrada: CSV con solicitantes (mismas columnas que cs-test.csv)
     salida : CSV con PD, score y decision
@@ -15,12 +15,8 @@ Uso:
     python predict.py --entrada solicitantes.csv --margen 800 --perdida 6000
     python predict.py --demo          # ejemplo con tres perfiles inventados
 
-POR QUE ESTE SCRIPT EXISTE
-
-Sin el, puntuar a un cliente nuevo exigiria cargar los 150,000 registros,
-re-ejecutar la limpieza, re-aprender las tablas WoE y re-entrenar el
-modelo — y bastaria que alguien hubiera cambiado una constante para
-obtener una PD distinta sin enterarse.
+Puntua con los artefactos congelados (modelo y preprocesador emparejados),
+asi que la PD no depende de volver a ejecutar el pipeline.
 
 Aqui se cargan dos ficheros y se aplica lo que ya estaba decidido.
 """
@@ -39,15 +35,27 @@ from src import artifacts
 from src.evaluation import umbral_optimo
 
 MODELOS = AQUI / "artifacts" / "models"
+PRE_DIR = AQUI / "artifacts" / "preprocessors"
 
-# Se prefiere el preprocesador FINAL (el que 06_evaluation.py congela junto al
-# modelo reentrenado con las 150,000 filas). Si no existe todavia, se usa el
-# de 02_preprocessing.py. Emparejar modelo y preprocesador de la misma "epoca"
-# es lo que permite reproducir una decision meses despues.
-_PRE_DIR = AQUI / "artifacts" / "preprocessors"
-PREPROC = (_PRE_DIR / "preprocessor_final.joblib"
-           if (_PRE_DIR / "preprocessor_final.joblib").exists()
-           else _PRE_DIR / "preprocessor_v1.joblib")
+
+def resolver_artefactos(modelo):
+    """
+    Devuelve (ruta_modelo, ruta_preprocesador) emparejados.
+
+    'final' -> el modelo que eligio 06, reentrenado con 150,000 filas, con el
+               preprocesador que 06 congelo junto a el.
+    '<x>_v1' -> el modelo entrenado con train (120,000) en 03/04/05, con el
+               preprocesador de 02.
+    Mezclar un modelo con el preprocesador de otra "epoca" daria PD que nadie
+    podria reproducir despues.
+    """
+    if modelo == "final":
+        elegido = artifacts.cargar_json(AQUI / "artifacts" / "metrics" / "modelo_elegido.json")
+        if not elegido:
+            sys.exit("No existe modelo_elegido.json. Ejecuta primero 06_evaluation.py.")
+        return (MODELOS / "final" / f"{elegido['modelo']}_final.joblib",
+                PRE_DIR / "preprocessor_final.joblib")
+    return MODELOS / f"{modelo}.joblib", PRE_DIR / "preprocessor_v1.joblib"
 
 TARGET = "SeriousDlqin2yrs"
 
@@ -100,8 +108,9 @@ def main():
                                  formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--entrada", type=Path, help="CSV con solicitantes")
     ap.add_argument("--salida", type=Path, default=None, help="CSV de resultados")
-    ap.add_argument("--modelo", default="xgboost_v1",
-                    help="xgboost_v1 | lightgbm_v1 | logistic_v1")
+    ap.add_argument("--modelo", default="final",
+                    help="final (el elegido en 06, por defecto) | xgboost_v1 | "
+                         "lightgbm_v1 | logistic_v1")
     ap.add_argument("--margen", type=float, default=800,
                     help="ganancia si el cliente paga")
     ap.add_argument("--perdida", type=float, default=6000,
@@ -114,17 +123,17 @@ def main():
         ap.error("indica --entrada RUTA.csv, o usa --demo")
 
     # --- 1. Cargar los artefactos --------------------------------------------
-    f_modelo = MODELOS / f"{args.modelo}.joblib"
+    f_modelo, f_pre = resolver_artefactos(args.modelo)
     if not f_modelo.exists():
-        sys.exit(f"No existe {f_modelo}. Entrena primero (03/04/05).")
-    if not PREPROC.exists():
-        sys.exit(f"No existe {PREPROC}. Ejecuta primero 02_preprocessing.py.")
+        sys.exit(f"No existe {f_modelo}. Ejecuta el pipeline (03-06) primero.")
+    if not f_pre.exists():
+        sys.exit(f"No existe {f_pre}. Ejecuta 02 (y 06 para el modelo final).")
 
-    art_pre = artifacts.cargar(PREPROC)
+    art_pre = artifacts.cargar(f_pre)
     art_mod = joblib.load(f_modelo)
-    rama = "woe" if "logistic" in args.modelo else "trees"
+    rama = art_mod.get("rama", "woe" if "logistic" in f_modelo.stem else "trees")
 
-    print(f"Preprocesador : {PREPROC.name}  (v{art_pre['version']}, "
+    print(f"Preprocesador : {f_pre.name}  (v{art_pre['version']}, "
           f"{art_pre['creado'][:10]})")
     print(f"Modelo        : {f_modelo.name}  ({len(art_mod['columnas'])} variables, "
           f"rama '{rama}')")

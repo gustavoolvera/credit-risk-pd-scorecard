@@ -19,9 +19,10 @@ artifacts/submissions/
 # --- Graficas: SI se versionan ------------------------------------------------
 # Se publican para que los resultados se vean en GitHub sin ejecutar nada.
 
-# --- Metricas: SI se versionan ------------------------------------------------
+# --- Metricas y resultados de experimentos: SI se versionan ------------------
 # Son ficheros pequenos de texto y documentan los resultados publicados.
-!artifacts/metrics/
+# Las excepciones para *.csv estan al final: tienen que ir DESPUES de la regla
+# general "*.csv" para que git las aplique.
 
 # --- Python -------------------------------------------------------------------
 __pycache__/
@@ -44,11 +45,16 @@ htmlcov/
 Thumbs.db
 desktop.ini
 
-# Datos originales y archivos comprimidos
+# Datos originales (Kaggle no permite redistribuirlos) y archivos comprimidos
+data/
 *.csv
 *.csv.gz
 *.parquet
 *.zip
+
+# Excepciones: metricas y resultados de experimentos (texto, pocos KB)
+!artifacts/metrics/*.csv
+!experiments/*/resultados/*.csv
 
 # Credenciales y configuraciones privadas
 .env

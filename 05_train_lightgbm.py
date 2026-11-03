@@ -50,6 +50,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+plt.rcParams["axes.unicode_minus"] = False   # signo "-" normal en los ejes
 
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
 from sklearn.metrics import roc_auc_score, roc_curve
@@ -57,6 +58,10 @@ from sklearn.linear_model import LogisticRegression
 import lightgbm as lgb
 from lightgbm import LGBMClassifier
 from xgboost import XGBClassifier
+
+sys.path.insert(0, str(Path(__file__).parent))
+from src import artifacts
+from src.evaluation import diferencia_pareada_cv
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -136,7 +141,7 @@ print(f"  {'LightGBM':<12} {t_lgb:>8.1f}s {auc(base, X_fit, y_fit):>12.5f} "
 print(f"  {'XGBoost':<12} {t_xgb:>8.1f}s {auc(base_xgb, X_fit, y_fit):>12.5f} "
       f"{auc(base_xgb, X_val, y_val):>10.5f}")
 print(f"\n  num_leaves por defecto en LightGBM: 31")
-print("  (fijate en la brecha ajuste/validacion: por defecto tambien sobreajusta)")
+print("  (la brecha ajuste/validacion indica que por defecto tambien sobreajusta)")
 
 
 # =============================================================================
@@ -154,7 +159,10 @@ print(f"  Entrenado en {time.time()-t0:.1f}s")
 print(f"  Arboles usados : {es.best_iteration_} de 3000 permitidos")
 print(f"  AUC early-stop : {es.best_score_['valid_0']['auc']:.5f}")
 print(f"  AUC validacion : {auc(es, X_val, y_val):.5f}")
-print("\n  Referencia XGBoost: 105 arboles, AUC validacion 0.86872")
+ref_xgb = artifacts.cargar_json(METRICAS / "xgboost_v1.json")
+if ref_xgb:
+    print(f"\n  Referencia XGBoost (xgboost_v1.json): {ref_xgb['n_arboles']} arboles, "
+          f"AUC validacion {ref_xgb['auc_val']:.5f}")
 
 
 # =============================================================================
@@ -255,8 +263,10 @@ cal["pd_real"] = (cal.pd_real * 100).round(2)
 cal["error_pp"] = (cal.pd_pred - cal.pd_real).round(2)
 print(cal.to_string())
 err_cal = cal.error_pp.abs().mean()
-print(f"\n  Error absoluto medio: {err_cal:.2f} pp   "
-      f"(LogReg 0.53 | XGBoost 0.34)")
+refs = {n: artifacts.cargar_json(METRICAS / f"{n}_v1.json").get("error_calibracion_pp")
+        for n in ("logistic", "xgboost")}
+print(f"\n  Error absoluto medio: {err_cal:.2f} pp   (LogReg {refs['logistic']} | "
+      f"XGBoost {refs['xgboost']}, de sus JSON)")
 
 
 # =============================================================================
@@ -268,8 +278,6 @@ imp = pd.DataFrame({"variable": COLS, "gain": modelo.booster_.feature_importance
 imp["pct"] = (imp["gain"] / imp["gain"].sum() * 100).round(2)
 imp = imp.sort_values("gain", ascending=False).reset_index(drop=True)
 print(imp.head(12).to_string(index=False))
-print("\n  Recordatorio: la importancia se REPARTE entre variables redundantes.")
-print("  Un 30% no significa 'sin esto el modelo cae'.")
 
 
 # =============================================================================
@@ -327,17 +335,23 @@ for n, s in comparativa.items():
 mejor_nombre = max(comparativa, key=lambda k: comparativa[k].mean())
 print(f"\n  MEJOR: {mejor_nombre} ({comparativa[mejor_nombre].mean():.5f})")
 
-print("\n  ¿Son diferencias reales o ruido?")
+# Los AUC por fold se guardan para que 06 y la documentacion usen exactamente
+# las mismas diferencias pareadas.
+pd.DataFrame(comparativa, index=pd.RangeIndex(1, cv.get_n_splits() + 1, name="fold")) \
+    .to_csv(METRICAS / "comparacion_modelos_cv_folds.csv")
+
+print("\n  Diferencias emparejadas fold a fold (IC 95% Nadeau-Bengio):")
+n_total = len(trees_y)
+k = cv.get_n_splits()
 nombres = list(comparativa)
 for i in range(len(nombres)):
     for j in range(i + 1, len(nombres)):
-        a, b = comparativa[nombres[i]], comparativa[nombres[j]]
-        dif = a.mean() - b.mean()
-        # Diferencias emparejadas: los folds son los mismos para ambos
-        d_folds = a - b
-        umbral = 2 * d_folds.std() / np.sqrt(len(d_folds))
-        veredicto = "REAL" if abs(dif) > umbral else "dentro del ruido"
-        print(f"    {nombres[i]:<16} vs {nombres[j]:<16} {dif:+.5f}   {veredicto}")
+        r = diferencia_pareada_cv(comparativa[nombres[i]], comparativa[nombres[j]],
+                                  n_train=n_total * (k - 1) / k, n_test=n_total / k)
+        veredicto = ("el IC excluye 0" if r["ic_inf"] > 0 or r["ic_sup"] < 0
+                     else "no se detecta diferencia (no implica equivalencia)")
+        print(f"    {nombres[i]:<16} - {nombres[j]:<16} {r['diferencia']:+.5f}  "
+              f"[{r['ic_inf']:+.5f}, {r['ic_sup']:+.5f}]  {veredicto}")
 
 
 # =============================================================================
@@ -353,34 +367,52 @@ for nombre, art, X_, color in [
         ("XGBoost", art_xgb, X_val[art_xgb["columnas"]], "#7a3a6a")]:
     pp = art["modelo"].predict_proba(X_)[:, 1]
     f, t, _ = roc_curve(y_val, pp)
-    ax.plot(f, t, lw=1.6, color=color, alpha=0.85,
+    ax.plot(f, t, lw=1.6, color=color, alpha=0.7,
             label=f"{nombre} ({roc_auc_score(y_val, pp):.4f})")
-ax.plot(fpr, tpr, lw=2.2, color="#1f7a5a", label=f"LightGBM ({auc_val:.4f})")
+ax.plot(fpr, tpr, lw=2.2, color="#1f7a5a", alpha=0.7, label=f"LightGBM ({auc_val:.4f})")
 ax.plot([0, 1], [0, 1], "--", color="gray", lw=1, label="azar")
 ax.set_xlabel("Falsos positivos"); ax.set_ylabel("Verdaderos positivos")
 ax.set_title("Curvas ROC — los tres modelos"); ax.legend(fontsize=8, loc="lower right")
 ax.grid(alpha=0.3)
 
 ax = axes[0, 1]
-ax.plot(cal.index, cal.pd_pred, "o-", color="#1f7a5a", label="PD predicha")
-ax.plot(cal.index, cal.pd_real, "s--", color="#a8392f", label="PD real")
+ax.plot(cal.index, cal.pd_pred, "o-", color="#1f7a5a", alpha=0.7, label="PD predicha")
+ax.plot(cal.index, cal.pd_real, "s--", color="#a8392f", alpha=0.7, label="PD real")
 ax.set_xlabel("Decil de riesgo"); ax.set_ylabel("% default")
 ax.set_title(f"Calibracion LightGBM (error {err_cal:.2f} pp)")
 ax.legend(fontsize=8); ax.grid(alpha=0.3)
 
+# Diferencias PAREADAS de AUC: los tres modelos se evaluan en los mismos
+# folds, y la dificultad de cada fold es comun a todos. Barras de media +/- DE
+# por modelo ocultarian eso (sus intervalos se solapan aunque la diferencia
+# pareada sea clara). IC con la correccion de Nadeau-Bengio para k-fold:
+# n_test/n_train = 1/(k-1).
+k = cv.get_n_splits()
+n_total = len(trees_y)
+pares = [("XGBoost", "LogReg (WoE)"), ("LightGBM", "LogReg (WoE)"), ("XGBoost", "LightGBM")]
 ax = axes[1, 0]
-pos = np.arange(len(comparativa))
-medias = [comparativa[n].mean() for n in comparativa]
-errs = [comparativa[n].std() for n in comparativa]
-ax.bar(pos, medias, yerr=errs, capsize=6,
-       color=["#3a4f7a", "#7a3a6a", "#1f7a5a"])
-ax.set_xticks(pos); ax.set_xticklabels(list(comparativa), fontsize=9)
-ax.set_ylim(min(medias) - 0.012, max(medias) + 0.008)
-ax.set_ylabel("ROC-AUC (validacion cruzada)")
-ax.set_title("Comparacion con barras de error (5 folds)")
-ax.grid(alpha=0.3, axis="y")
-for x, m in zip(pos, medias):
-    ax.text(x, m, f"{m:.5f}", ha="center", va="bottom", fontsize=8)
+corto = lambda n: n.replace(" (WoE)", "")
+for i, (a, b) in enumerate(pares[::-1]):
+    r = diferencia_pareada_cv(comparativa[a], comparativa[b],
+                              n_train=n_total * (k - 1) / k, n_test=n_total / k)
+    ax.errorbar(r["diferencia"], i,
+                xerr=[[r["diferencia"] - r["ic_inf"]], [r["ic_sup"] - r["diferencia"]]],
+                fmt="o", color="#1f7a5a", ecolor="#1f7a5a", capsize=4, alpha=0.85)
+    # Valores alineados a la derecha, por encima de cada intervalo: no pisan
+    # la linea del cero ni las barras de error.
+    ax.text(0.98, i + 0.22, f"{r['diferencia']:+.4f}   IC [{r['ic_inf']:+.4f}, {r['ic_sup']:+.4f}]",
+            transform=ax.get_yaxis_transform(), ha="right", va="bottom", fontsize=8)
+ax.axvline(0, color="black", lw=0.8)
+ax.set_yticks(range(len(pares)))
+ax.set_yticklabels([f"{corto(a)} vs {corto(b)}" for a, b in pares[::-1]], fontsize=9)
+ax.set_ylim(-0.6, len(pares) - 0.3)
+ax.set_xlabel("Δ ROC-AUC  (primer modelo menos el segundo, mismos folds)")
+ax.set_title(f"Diferencias pareadas de AUC ({k} folds)")
+ax.grid(alpha=0.3, axis="x")
+ax.text(0.0, -0.17,
+        f"IC 95% corregido (Nadeau–Bengio), t con {k - 1} g.l. Con solo {k} folds la inferencia\n"
+        "es aproximada y de baja potencia: un IC que incluye 0 no demuestra equivalencia.",
+        transform=ax.transAxes, fontsize=7.5, color="dimgray", va="top")
 
 ax = axes[1, 1]
 t = imp.head(12).iloc[::-1]
@@ -411,9 +443,6 @@ pd.Series({
 pd.DataFrame(tabla).to_csv(METRICAS / "comparacion_modelos_cv.csv", index=False)
 rej.to_csv(METRICAS / "lightgbm_rejilla.csv", index=False)
 
-print("  artifacts/models/lightgbm_v1.joblib")
-print("  artifacts/metrics/lightgbm_v1.json")
-print("  artifacts/metrics/comparacion_modelos_cv.csv")
 
 print("\n" + "=" * 79)
 print(f"LightGBM — AUC validacion = {auc_val:.5f} | "

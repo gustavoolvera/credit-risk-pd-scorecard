@@ -19,11 +19,13 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+plt.rcParams["axes.unicode_minus"] = False   # signo "-" normal en los ejes
 
 from sklearn.linear_model import LogisticRegression, LinearRegression
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
 from sklearn.metrics import (roc_auc_score, roc_curve, precision_recall_curve,
-                             confusion_matrix, average_precision_score)
+                             confusion_matrix, average_precision_score,
+                             brier_score_loss)
 
 sys.path.insert(0, str(Path(__file__).parent))
 from src.evaluation import (ks_statistic, gini, tabla_calibracion,
@@ -45,6 +47,13 @@ for d in (MODELOS, METRICAS, PLOTS):
 
 TARGET = "SeriousDlqin2yrs"
 SEMILLA = 42
+
+# Tolerancia de convergencia de lbfgs. Con la de sklearn (1e-4) el optimizador
+# se detenia en ~15 iteraciones y los betas solo quedaban precisos a ~4e-4:
+# cualquier cambio inocuo en los datos (p.ej. desplazar el WoE de una variable
+# en una constante, que absorbe el intercepto) movia los betas en esa cantidad.
+# Con 1e-8 converge en ~40 iteraciones y los betas son reproducibles a ~1e-6.
+TOL_LBFGS = 1e-8
 
 
 def titulo(t):
@@ -69,8 +78,6 @@ X_val = val.drop(columns=[TARGET])
 print(f"  Entrenamiento : {X_tr.shape[0]:>7,} filas x {X_tr.shape[1]} variables")
 print(f"  Validacion    : {X_val.shape[0]:>7,} filas x {X_val.shape[1]} variables")
 print(f"  Tasa de default: {y_tr.mean()*100:.2f}% (train) | {y_val.mean()*100:.2f}% (val)")
-print("\n  Nota: no hace falta escalar. El WoE ya deja todas las variables")
-print("  en la misma escala (log-odds), que es justo la que usa LogReg.")
 
 
 # =============================================================================
@@ -182,6 +189,7 @@ def entrenar(cols, y_train=y_tr, balanceado=False, X_train=None):
         X_train, y_train = X_tr, y_tr
     modelo = LogisticRegression(
         max_iter=2000,
+        tol=TOL_LBFGS,
         random_state=SEMILLA,
         class_weight="balanced" if balanceado else None,
     )
@@ -216,13 +224,6 @@ for r in resultados:
     if r["_detalle"]:
         print(f"    {r['subconjunto']}: {r['_detalle']}")
 
-print("\n  Lectura:")
-print("   - AUC_seleccion es el criterio (validacion no se toca todavia)")
-print("   - VIF_max alto     = coeficientes inestables aunque el AUC sea bueno")
-print("   - incoherentes > 0 = hay coeficientes que CONTRADICEN la direccion")
-print("                        univariada de su variable. En un scorecard eso")
-print("                        significa dar puntos a favor a un grupo de alto")
-print("                        riesgo: indefendible ante un regulador.")
 
 # CRITERIO DE SELECCION
 #   Para un scorecard, un coeficiente que contradice la evidencia univariada
@@ -279,9 +280,6 @@ modelo = entrenar(COLS, balanceado=False)
 p_tr = modelo.predict_proba(X_tr[COLS])[:, 1]
 p_val = modelo.predict_proba(X_val[COLS])[:, 1]
 
-print("\n  Se usa el modelo SIN balancear: sus probabilidades son PD reales,")
-print("  que es lo que necesita un scorecard. El desbalance se maneja")
-print("  eligiendo el umbral, no deformando el modelo.")
 
 
 # =============================================================================
@@ -306,9 +304,7 @@ print(f"    el modelo le da mas riesgo al moroso el {auc_val*100:.1f}% de las ve
 
 print("\n  --- KS (Kolmogorov-Smirnov) ---")
 print(f"    KS = {ks:.4f}  en umbral {ks_umbral:.4f}")
-print("    Referencia bancaria: >0.30 aceptable | >0.40 bueno")
 
-print("\n  --- Average Precision (area bajo la curva precision-recall) ---")
 print(f"    AP = {ap:.4f}   (una linea base al azar daria {y_val.mean():.4f})")
 
 # --- El problema del umbral 0.5 ---------------------------------------------
@@ -335,10 +331,6 @@ for u in [0.03, 0.05, 0.07, 0.10, 0.15, 0.20, 0.30, 0.50]:
     f1 = 2 * prec * rec / (prec + rec) if (prec + rec) else 0
     print(f"    {u:>7.2f} | {pred.sum():>9,} | {prec*100:>8.1f}% | {rec*100:>6.1f}% | {f1:>6.3f}")
 
-print("\n    Cada fila es una decision de negocio distinta. Bajar el umbral")
-print("    detecta mas morosos (recall sube) pero rechaza mas clientes buenos")
-print("    (precision baja). No existe el umbral 'correcto' en abstracto:")
-print("    depende de cuanto cuesta cada error.")
 
 # --- Matriz de confusion en un umbral operativo ------------------------------
 UMBRAL_OP = 0.10
@@ -414,7 +406,8 @@ print(f"\n  [3] INCERTIDUMBRE DEL AUC (validacion cruzada, 5 particiones)")
 todo_X = pd.concat([X_tr[COLS], X_val[COLS]])
 todo_y = pd.concat([y_tr, y_val])
 cv = StratifiedKFold(5, shuffle=True, random_state=SEMILLA)
-scores = cross_val_score(LogisticRegression(max_iter=5000, random_state=SEMILLA),
+scores = cross_val_score(LogisticRegression(max_iter=5000, tol=TOL_LBFGS,
+                                            random_state=SEMILLA),
                          todo_X, todo_y, cv=cv, scoring="roc_auc")
 print(f"      AUC por fold: {np.round(scores, 5)}")
 print(f"      media {scores.mean():.5f}  desv {scores.std():.5f}")
@@ -422,8 +415,6 @@ print(f"      rango ~95%: [{scores.mean()-2*scores.std():.5f}, "
       f"{scores.mean()+2*scores.std():.5f}]")
 print(f"\n      El AUC de validacion ({auc_val:.5f}) cae dentro del rango: "
       f"{'si' if abs(auc_val-scores.mean()) <= 2*scores.std() else 'NO'}")
-print("      -> Comparar modelos con un solo split no es fiable: una diferencia")
-print("         menor que ~2 desviaciones puede ser puro ruido.")
 
 # --- 7d. ¿Importa la regularizacion? ----------------------------------------
 # C es EL hiperparametro clasico de la regresion logistica. Merece la pena
@@ -432,15 +423,12 @@ print(f"\n  [4] ¿IMPORTA EL PARAMETRO C (regularizacion)?")
 print(f"      {'C':>10} {'AUC_val':>10} {'|coef| max':>11} {'signos mal':>11}")
 print("      " + "-" * 46)
 for C in [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]:
-    mm = LogisticRegression(C=C, max_iter=5000, random_state=SEMILLA).fit(X_tr[COLS], y_tr)
+    mm = LogisticRegression(C=C, max_iter=5000, tol=TOL_LBFGS,
+                            random_state=SEMILLA).fit(X_tr[COLS], y_tr)
     a = roc_auc_score(y_val, mm.predict_proba(X_val[COLS])[:, 1])
     marca = "  <- el usado" if C == 1.0 else ""
     print(f"      {C:>10} {a:>10.5f} {np.abs(mm.coef_[0]).max():>11.3f} "
           f"{len(signos_incoherentes(mm.coef_[0], COLS, X_tr, y_tr)):>11}{marca}")
-print("\n      Con 120,000 filas y 18 variables (unas 6,600 observaciones por")
-print("      parametro) los datos dominan y no hay margen para sobreajustar:")
-print("      la regularizacion no cambia nada. Saber QUE NO ajustar ahorra")
-print("      tanto tiempo como saber que ajustar.")
 
 
 # =============================================================================
@@ -452,7 +440,7 @@ fig, axes = plt.subplots(2, 2, figsize=(13, 10))
 
 # --- Curva ROC ---------------------------------------------------------------
 ax = axes[0, 0]
-ax.plot(fpr, tpr, color="#3a4f7a", lw=2, label=f"LogReg (AUC = {auc_val:.4f})")
+ax.plot(fpr, tpr, color="#3a4f7a", lw=2, alpha=0.7, label=f"LogReg (AUC = {auc_val:.4f})")
 ax.plot([0, 1], [0, 1], "--", color="gray", lw=1, label="azar (AUC = 0.5)")
 i_ks = np.argmax(tpr - fpr)
 ax.plot([fpr[i_ks], fpr[i_ks]], [fpr[i_ks], tpr[i_ks]], color="#a8392f", lw=2,
@@ -481,12 +469,23 @@ ax.hist(p_val[y_val == 0], bins=60, alpha=0.65, density=True,
         color="#2b6247", label="no cayo en mora")
 ax.hist(p_val[y_val == 1], bins=60, alpha=0.65, density=True,
         color="#a8392f", label="si cayo en mora")
-ax.set_xlim(0, 0.6)
+ax.set_xlim(0, 1)
 ax.set_xlabel("Probabilidad predicha (PD)")
 ax.set_ylabel("Densidad")
 ax.set_title("¿Separa el modelo a las dos poblaciones?")
 ax.legend(fontsize=8)
 ax.grid(alpha=0.3)
+# Brier Score: error cuadratico persona a persona, sin agrupar en deciles.
+# Mezcla calibracion y discriminacion, asi que se compara con la referencia
+# de predecir la tasa base a todos: BS_ref = p(1-p). BSS = 1 - BS/BS_ref.
+brier = brier_score_loss(y_val, p_val)
+brier_ref = y_val.mean() * (1 - y_val.mean())
+ax.text(0.97, 0.80,
+        f"Brier Score = {brier:.4f}\n"
+        f"Referencia (tasa base) = {brier_ref:.4f}\n"
+        f"Brier Skill Score = {1 - brier / brier_ref:.3f}",
+        transform=ax.transAxes, fontsize=8, va="top", ha="right",
+        bbox=dict(boxstyle="round", facecolor="white", edgecolor="gray", alpha=0.9))
 
 # --- Coeficientes ------------------------------------------------------------
 ax = axes[1, 1]
@@ -497,7 +496,7 @@ ax.set_yticks(range(len(c)))
 ax.set_yticklabels([v.replace("woe_", "") for v in c["variable"]], fontsize=7)
 ax.axvline(0, color="black", lw=0.8)
 ax.set_xlabel("Coeficiente")
-ax.set_title("Peso de cada variable (top 12)")
+ax.set_title(f"Peso de cada variable (top {len(c)})")
 ax.grid(alpha=0.3, axis="x")
 
 plt.tight_layout()
@@ -522,6 +521,8 @@ metricas = {
     "modelo": "LogisticRegression (WoE)",
     "subconjunto": NOMBRE_ELEGIDO,
     "n_variables": len(COLS),
+    "tol_lbfgs": TOL_LBFGS,
+    "n_iter_lbfgs": int(modelo.n_iter_[0]),
     "auc_train": round(auc_tr, 5),
     "auc_val": round(auc_val, 5),
     "ks_val": round(float(ks), 5),
@@ -530,13 +531,12 @@ metricas = {
     "auc_cv_desv": round(float(scores.std()), 5),
     "error_calibracion_pp": round(float(err_cal), 3),
     "gini_val": round(float(gini(auc_val)), 4),
+    "brier_val": round(float(brier), 5),
+    "brier_skill_score_val": round(float(1 - brier / brier_ref), 4),
 }
 pd.Series(metricas).to_json(METRICAS / "logistic_v1.json", indent=2)
 comparacion.to_csv(METRICAS / "logistic_comparacion_subconjuntos.csv", index=False)
 
-print("  artifacts/models/logistic_v1.joblib")
-print("  artifacts/metrics/logistic_v1.json")
-print("  artifacts/metrics/logistic_comparacion_subconjuntos.csv")
 
 print("\n" + "=" * 79)
 print(f"BASELINE ESTABLECIDO — ROC-AUC = {auc_val:.5f}")

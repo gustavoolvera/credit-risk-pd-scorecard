@@ -34,10 +34,14 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+plt.rcParams["axes.unicode_minus"] = False   # signo "-" normal en los ejes
 
 from sklearn.model_selection import train_test_split, StratifiedKFold, cross_val_score
-from sklearn.metrics import roc_auc_score, roc_curve
+from sklearn.metrics import roc_auc_score, roc_curve, brier_score_loss
 from xgboost import XGBClassifier
+
+sys.path.insert(0, str(Path(__file__).parent))
+from src import artifacts
 
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
@@ -91,7 +95,6 @@ print(f"\n  Columnas con NaN: {(n_nan > 0).sum()} de {X_tr_full.shape[1]}"
 print("  Se dejan tal cual: XGBoost aprende la direccion optima para cada uno.")
 
 # --- Sub-split para EARLY STOPPING -------------------------------------------
-# CUIDADO CON ESTO:
 #   Si usaramos el conjunto de validacion para decidir cuando parar de anadir
 #   arboles, estariamos AJUSTANDO a validacion. El AUC que reportaramos sobre
 #   ese mismo conjunto seria optimista, porque ya lo habriamos usado para
@@ -123,9 +126,9 @@ base.fit(X_fit, y_fit, verbose=False)
 print(f"  Entrenado en {time.time()-t0:.1f}s")
 print(f"  AUC ajuste     : {auc(base, X_fit, y_fit):.5f}")
 print(f"  AUC validacion : {auc(base, X_val, y_val):.5f}")
-print(f"\n  Referencia — LogReg baseline: 0.86272")
-print("  (con los defaults el arbol suele SOBREAJUSTAR: fijate en la brecha")
-print("   entre ajuste y validacion)")
+ref_log = artifacts.cargar_json(METRICAS / "logistic_v1.json")
+if ref_log:
+    print(f"\n  Referencia — LogReg (logistic_v1.json): AUC validacion {ref_log['auc_val']:.5f}")
 
 
 # =============================================================================
@@ -168,8 +171,6 @@ for nombre, cols in SUBCONJUNTOS.items():
 
 COLS = list(X_tr_full.columns)   # los arboles se quedan con todas
 print(f"\n  Se usan las {len(COLS)} variables. A diferencia de LogReg, aqui no")
-print("  hay coeficientes que puedan salir con el signo invertido: un arbol")
-print("  elige UNA variable por division en vez de repartir peso entre varias.")
 
 
 # =============================================================================
@@ -254,7 +255,7 @@ print(f"\n  Busqueda completada en {time.time()-t0:.1f}s")
 
 rej = pd.DataFrame(resultados)
 # Elegimos por AUC del set de early stopping, NO por el de validacion:
-# elegir por validacion seria ajustar a ella y el numero final mentiria.
+# elegir por validacion la convertiria en parte del ajuste y sesgaria su AUC.
 mejor = rej.sort_values("auc_es", ascending=False).iloc[0]
 MEJORES = {k: mejor[k] for k in
            ["max_depth", "min_child_weight", "subsample", "colsample_bytree"]}
@@ -286,8 +287,6 @@ for etiqueta, spw in [("sin ajustar (PD calibrada)", 1.0),
     print(f"  {etiqueta:<30} AUC_val = {roc_auc_score(y_val, p):.5f}   "
           f"PD media = {p.mean()*100:5.2f}%  (real: {y_val.mean()*100:.2f}%)")
 
-print("\n  Igual que en LogReg: se usa SIN ajustar, para que las probabilidades")
-print("  sigan siendo PD reales. El desbalance se maneja en el umbral.")
 
 
 # =============================================================================
@@ -320,7 +319,8 @@ cal["pd_real"] = (cal.pd_real * 100).round(2)
 cal["error_pp"] = (cal.pd_pred - cal.pd_real).round(2)
 print(cal.to_string())
 print(f"\n  Error absoluto medio: {cal.error_pp.abs().mean():.2f} puntos porcentuales")
-print("  (LogReg logro 0.53 pp)")
+if ref_log:
+    print(f"  (LogReg: {ref_log['error_calibracion_pp']:.2f} pp)")
 
 
 # =============================================================================
@@ -335,24 +335,16 @@ imp = pd.DataFrame({
 imp["pct"] = (imp["gain"] / imp["gain"].sum() * 100).round(2)
 print(imp.head(15).to_string(index=False))
 
-print("\n  OJO al interpretar esto: la importancia se REPARTE entre variables")
-print("  redundantes. Si total_atrasos y peor_atraso dicen casi lo mismo, cada")
-print("  una recibe la mitad del credito, y ambas parecen menos importantes de")
-print("  lo que realmente es esa informacion.")
 
 
 # =============================================================================
-# PASO 9 — COMPARACION HONESTA CON LOGREG
+# PASO 9 — VALIDACION CRUZADA
 # =============================================================================
-titulo("PASO 9 — ¿LE GANA A LA REGRESION LOGISTICA?")
+titulo("PASO 9 — VALIDACION CRUZADA (5 folds)")
 
-# Un solo split tiene una variabilidad de ~±0.003 de AUC (lo medimos con
-# cross-validation en LogReg). Comparar dos modelos con un unico numero es
-# poco fiable: una diferencia menor a ~0.007 podria ser puro ruido.
-# Por eso repetimos la evaluacion con 5 particiones distintas.
-print("  Comparando con validacion cruzada de 5 particiones,")
-print("  porque un solo split tiene ~±0.003 de ruido.\n")
-
+# Un solo split tiene una variabilidad de ~±0.003 de AUC. La CV da la media y
+# la dispersion entre folds. La comparacion con LogReg y LightGBM se hace en
+# 05_train_lightgbm.py, emparejada fold a fold sobre estos mismos folds.
 todo_X = pd.concat([X_tr_full[COLS], X_val[COLS]])
 todo_y = pd.concat([y_tr_full, y_val])
 cv = StratifiedKFold(5, shuffle=True, random_state=SEMILLA)
@@ -363,16 +355,8 @@ xgb_cv = XGBClassifier(
 scores_xgb = cross_val_score(xgb_cv, todo_X, todo_y, cv=cv, scoring="roc_auc")
 
 print(f"  XGBoost  AUC por fold: {np.round(scores_xgb, 5)}")
-print(f"           media = {scores_xgb.mean():.5f}   desv = {scores_xgb.std():.5f}")
-print(f"  LogReg   media = 0.85948   desv = 0.00335   (medido en el paso anterior)")
-
-dif = scores_xgb.mean() - 0.85948
-print(f"\n  Diferencia: {dif:+.5f}")
-if abs(dif) < 2 * scores_xgb.std():
-    print("  -> Dentro del ruido: NO se puede afirmar que uno sea mejor.")
-else:
-    print(f"  -> Diferencia mayor que 2 desviaciones: XGBoost "
-          f"{'gana' if dif > 0 else 'pierde'} de forma consistente.")
+print(f"           media = {scores_xgb.mean():.5f}   desv (ddof=0) = {scores_xgb.std():.5f}")
+print("  Comparacion emparejada con los otros modelos: ver 05_train_lightgbm.py")
 
 
 # =============================================================================
@@ -383,7 +367,7 @@ titulo("PASO 10 — GRAFICAS Y GUARDADO")
 fig, axes = plt.subplots(2, 2, figsize=(13, 10))
 
 ax = axes[0, 0]
-ax.plot(fpr, tpr, color="#7a3a6a", lw=2, label=f"XGBoost (AUC = {auc_val:.4f})")
+ax.plot(fpr, tpr, color="#7a3a6a", lw=2, alpha=0.7, label=f"XGBoost (AUC = {auc_val:.4f})")
 ax.plot([0, 1], [0, 1], "--", color="gray", lw=1, label="azar")
 i = int(np.argmax(tpr - fpr))
 ax.plot([fpr[i], fpr[i]], [fpr[i], tpr[i]], color="#a8392f", lw=2, label=f"KS = {ks:.4f}")
@@ -391,17 +375,29 @@ ax.set_xlabel("Falsos positivos"); ax.set_ylabel("Verdaderos positivos")
 ax.set_title("Curva ROC — XGBoost"); ax.legend(fontsize=8, loc="lower right"); ax.grid(alpha=0.3)
 
 ax = axes[0, 1]
-ax.plot(cal.index, cal.pd_pred, "o-", color="#7a3a6a", label="PD predicha")
-ax.plot(cal.index, cal.pd_real, "s--", color="#2b6247", label="PD real")
+ax.plot(cal.index, cal.pd_pred, "o-", color="#7a3a6a", alpha=0.7, label="PD predicha")
+ax.plot(cal.index, cal.pd_real, "s--", color="#2b6247", alpha=0.7, label="PD real")
 ax.set_xlabel("Decil de riesgo"); ax.set_ylabel("% default")
 ax.set_title("Calibracion: predicho vs real"); ax.legend(fontsize=8); ax.grid(alpha=0.3)
+# Los deciles promedian: dentro de un grupo, errores de signo contrario se
+# compensan. El Brier Score se calcula persona a persona, sin agrupar. Como
+# mezcla calibracion y discriminacion, se compara con la referencia de
+# predecir la tasa base a todos: BS_ref = p(1-p). BSS = 1 - BS/BS_ref.
+brier = brier_score_loss(y_val, p_val)
+brier_ref = y_val.mean() * (1 - y_val.mean())
+ax.text(0.03, 0.62,
+        f"Brier Score = {brier:.4f}\n"
+        f"Referencia (tasa base) = {brier_ref:.4f}\n"
+        f"Brier Skill Score = {1 - brier / brier_ref:.3f}",
+        transform=ax.transAxes, fontsize=8, va="top",
+        bbox=dict(boxstyle="round", facecolor="white", edgecolor="gray", alpha=0.9))
 
 ax = axes[1, 0]
 ax.hist(p_val[y_val == 0], bins=60, alpha=0.65, density=True, color="#2b6247",
         label="no cayo en mora")
 ax.hist(p_val[y_val == 1], bins=60, alpha=0.65, density=True, color="#a8392f",
         label="si cayo en mora")
-ax.set_xlim(0, 0.6); ax.set_xlabel("PD predicha"); ax.set_ylabel("Densidad")
+ax.set_xlim(0, 1);ax.set_xlabel("PD predicha"); ax.set_ylabel("Densidad")
 ax.set_title("Separacion de las dos poblaciones"); ax.legend(fontsize=8); ax.grid(alpha=0.3)
 
 ax = axes[1, 1]
@@ -432,9 +428,6 @@ pd.Series({
 }).to_json(METRICAS / "xgboost_v1.json", indent=2)
 rej.to_csv(METRICAS / "xgboost_rejilla.csv", index=False)
 
-print("  artifacts/models/xgboost_v1.joblib")
-print("  artifacts/metrics/xgboost_v1.json")
-print("  artifacts/metrics/xgboost_rejilla.csv")
 
 print("\n" + "=" * 79)
 print(f"XGBoost — AUC validacion = {auc_val:.5f} | CV = {scores_xgb.mean():.5f} "

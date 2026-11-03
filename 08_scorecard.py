@@ -56,6 +56,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+plt.rcParams["axes.unicode_minus"] = False   # signo "-" normal en los ejes
 
 sys.path.insert(0, str(Path(__file__).parent))
 from src import artifacts
@@ -255,8 +256,6 @@ print(f"  Cliente #{X_val.index[i]}  |  score {score_sumado[i]:.0f} puntos  |  "
 print(f"\n  Desglose (ordenado de lo que mas resta a lo que mas suma):")
 print(det.to_string(index=False))
 print(f"\n  SCORE TOTAL: {det['puntos'].sum():.0f} puntos")
-print("\n  Esto es lo que la regresion logistica da y los boosters no:")
-print("  se le puede decir al cliente exactamente que le resto puntos.")
 
 
 # =============================================================================
@@ -312,7 +311,17 @@ for xi, (n, d) in enumerate(zip(tabla_bandas["n"], tabla_bandas["default_pct"]))
 
 ax = axes[2]
 top = scorecard.dropna(subset=["n"]).copy()
-top["rango_corto"] = top["variable"].str.slice(0, 18) + " " + top["rango"].str.slice(0, 12)
+NOMBRE_CORTO = {
+    "RevolvingUtilizationOfUnsecuredLines": "RevolvingUtil",
+    "NumberOfTimes90DaysLate": "90DaysLate",
+    "NumberOfTime30-59DaysPastDueNotWorse": "30-59DaysPastDue",
+    "NumberOfTime60-89DaysPastDueNotWorse": "60-89DaysPastDue",
+    "NumberRealEstateLoansOrLines": "RealEstateLoans",
+    "NumberOfOpenCreditLinesAndLoans": "OpenCreditLines",
+    "NumberOfDependents": "Dependents",
+    "DebtRatio_limpio": "DebtRatio",
+}
+top["rango_corto"] = top["variable"].map(lambda v: NOMBRE_CORTO.get(v, v)) + " " + top["rango"]
 top = top.reindex(top["puntos_rel"].abs().sort_values(ascending=False).index).head(14).iloc[::-1]
 colores = ["#2b6247" if v > 0 else "#a8392f" for v in top["puntos_rel"]]
 ax.barh(range(len(top)), top["puntos_rel"], color=colores)
@@ -325,8 +334,6 @@ plt.tight_layout()
 plt.savefig(PLOTS / "08_scorecard.png", dpi=110)
 plt.close()
 print(f"  {(PLOTS / '08_scorecard.png').relative_to(AQUI)}")
-print("  artifacts/metrics/scorecard.csv")
-print("  artifacts/metrics/scorecard_bandas.csv")
 
 print("\n" + "=" * 79)
 print(f"SCORECARD GENERADO — {len(scorecard)} atributos | "

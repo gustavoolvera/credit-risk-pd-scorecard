@@ -41,7 +41,7 @@ pd.set_option("display.max_columns", 40)
 
 # --- Rutas -------------------------------------------------------------------
 AQUI = Path(__file__).parent
-DATA = AQUI.parent.parent / "data"
+DATA = artifacts.ruta_datos(AQUI)
 PROC = AQUI / "datasets" / "processed"
 ARTEFACTOS = AQUI / "artifacts" / "preprocessors"
 
@@ -176,8 +176,6 @@ print(f"\n    {len(sep) - n_no} de {len(sep)} indicadores separan riesgo de form
 if n_no:
     inutiles = ", ".join(sep.loc[~sep["separa"], "indicador"])
     print(f"    Sin senal (su IC contiene la tasa del complemento): {inutiles}")
-    print("    No se eliminan: los arboles los ignoran sin coste. El modelo")
-    print("    logistico si los excluye (usa solo las 10 variables originales).")
 
 
 # =============================================================================
@@ -212,11 +210,7 @@ tablas_woe = woe_mod.aprender_woe(X_tr_c, y_tr)
 iv = woe_mod.calcular_iv(tablas_woe)
 print("  INFORMATION VALUE (poder predictivo de cada variable):\n")
 print(iv.to_string(index=False))
-print("\n  Escala: <0.02 inutil | 0.02-0.10 debil | 0.10-0.30 medio")
-print("          0.30-0.50 fuerte | >0.50 sospechoso (investigar)")
 
-print("\n\n  TABLA WoE DE LA VARIABLE MAS PREDICTIVA")
-print("  (WoE positivo = mas seguro que la media | negativo = mas riesgoso)")
 top = iv.iloc[0]["variable"]
 print(f"\n  --- {top}  (IV = {iv.iloc[0]['IV']}) ---")
 print(tablas_woe[top][["n", "pct_poblacion", "default_rate_pct", "woe", "iv_parcial"]]

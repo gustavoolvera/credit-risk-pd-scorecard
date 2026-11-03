@@ -1,5 +1,6 @@
 # Give Me Some Credit — Probability of Default
-# Instalar con:  pip install -r requirements.txt
+# Probado con Python 3.13.9. Instalar con:  pip install -r requirements.txt
+# Versiones fijadas: con otra version de xgboost los AUC cambian en la 7.a cifra.
 
 # --- Datos y calculo ---
 pandas==2.3.3
@@ -9,12 +10,13 @@ pyarrow==21.0.0          # lectura/escritura de .parquet
 
 # --- Modelado ---
 scikit-learn==1.7.2
-xgboost>=2.0             # pendiente de instalar (fase de modelado)
-lightgbm>=4.0            # pendiente de instalar (fase de modelado)
+xgboost==3.3.0
+lightgbm==4.7.0
+shap==0.52.0             # explicabilidad del modelo elegido (06_evaluation.py)
 
 # --- Visualizacion ---
 matplotlib==3.10.6
-seaborn==0.13.2
+seaborn==0.13.2          # solo 01_eda.py
 
 # --- Persistencia de transformadores y modelos ---
 joblib==1.5.2

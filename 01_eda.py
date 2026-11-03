@@ -24,6 +24,7 @@ from sklearn.model_selection import train_test_split
 import matplotlib
 matplotlib.use("Agg")          # backend "sin ventana": guarda imagenes en disco en vez de abrir popups
 import matplotlib.pyplot as plt
+plt.rcParams["axes.unicode_minus"] = False   # signo "-" normal en los ejes
 import matplotlib.ticker as mticker
 import seaborn as sns
 
@@ -32,6 +33,7 @@ import seaborn as sns
 # sola vez y quede cubierta por los tests.
 sys.path.insert(0, str(Path(__file__).parent))
 from src.evaluation import ic_wilson
+from src.artifacts import ruta_datos
 
 
 def _formato_eje(v, _pos=None):
@@ -61,7 +63,7 @@ sns.set_theme(style="whitegrid")
 # Path(__file__) = la ruta de ESTE archivo. .parent = la carpeta que lo contiene.
 # Usamos rutas relativas para que el script funcione en cualquier computadora.
 AQUI = Path(__file__).parent
-DATA = AQUI.parent.parent / "data"      # subimos 2 niveles y entramos a /data
+DATA = ruta_datos(AQUI)
 OUTPUTS = AQUI / "outputs"
 OUTPUTS.mkdir(exist_ok=True)
 
@@ -179,8 +181,6 @@ titulo("PARTE 3 — ESTADISTICOS DESCRIPTIVOS")
 # .T = transpuesta: pone las variables como filas (mas facil de leer con muchas columnas)
 print(train.describe(percentiles=[0.25, 0.50, 0.75, 0.95, 0.99, 0.995, 0.999]).T)
 
-print("\nLECTURA CLAVE: compara la columna '50%' (mediana) con 'max'.")
-print("Si el maximo es miles de veces mayor que la mediana -> hay outliers extremos.")
 
 
 # =============================================================================
@@ -364,12 +364,9 @@ if not faltantes.empty:
     else:
         print(f"    -> el rango no supera el ruido ({rango:.2f} <= {umbral_ruido:.2f}):"
               " sin indicios de diferencia")
-    print("    Es una heuristica de tamano, no controla error tipo I ni")
-    print("    comparaciones multiples. El contraste formal viene despues.")
 
     # Comparacion por pares: dos patrones son distinguibles si sus intervalos
     # no se solapan. Es una conclusion directa, sin umbral de por medio.
-    print("\n  Pares de patrones con intervalos que NO se solapan:")
     pares_separados = 0
     idx = list(fiables.index)
     for i in range(len(idx)):
@@ -616,8 +613,6 @@ print(f"        {'max':<12} {debt[~sin_denom].max():>14,.0f} "
 n_cero = int((debt[sin_denom] == 0).sum())
 print(f"\n        Filas SIN ingreso con DebtRatio exactamente 0: {n_cero:,} "
       f"({n_cero/int(sin_denom.sum())*100:.1f}%)")
-print("        Un importe de 0 y un ratio de 0 son el mismo numero: en ese")
-print("        extremo la ambiguedad de unidad no tiene consecuencias.")
 
 p99_con = debt[~sin_denom].quantile(0.99)
 p10_sin = debt[sin_denom].quantile(0.10)
@@ -646,8 +641,6 @@ for lim in [1, 2, 10, 100]:
 # reescalar. Lo que decide es si la variable ORDENA el riesgo. Se mide con la
 # correlacion de Spearman entre el indice de decil y la tasa de evento, que
 # solo mira el orden y por tanto es inmune al cambio de unidad.
-print("\n    (3) GRADIENTE DE RIESGO POR DECIL, DENTRO DE CADA GRUPO")
-print("        (si significaran lo mismo, ambos ordenarian el riesgo igual)")
 
 for nombre, m in grupos_dn:
     sub = train.loc[m, ["DebtRatio", TARGET]].copy()
@@ -666,16 +659,8 @@ for nombre, m in grupos_dn:
     print(f"        Rango de tasas: {g['tasa'].min():.2f}% a {g['tasa'].max():.2f}%")
 
 # --- (4) Veredicto ----------------------------------------------------------
-print("\n    (4) VEREDICTO")
-print("        Con denominador, DebtRatio ordena el riesgo de forma creciente")
-print("        en su mitad superior: es apalancamiento y se comporta como tal.")
-print("        Sin denominador, el importe de deuda NO ordena nada: la tasa")
-print("        rebota sin direccion y el decil mas alto vuelve a la media.")
-print("        Son dos variables distintas compartiendo columna. Por eso el")
-print("        pipeline las separa en DebtRatio_limpio y deuda_bruta_proxy (ver 5e).")
 
 # --- 5d. Edad ---------------------------------------------------------------
-print("\n5d. age:")
 edad = train["age"]
 print(f"    Min: {edad.min()}   |   Max: {edad.max()}")
 
@@ -757,11 +742,6 @@ print("        -> " + ("no hay banda continua: 0 y 1 son valores DISCRETOS"
 #   - Si los sospechosos tienen DebtRatio del orden de 0-2, son ratios de verdad
 #     y el pipeline los estaria destruyendo sin motivo.
 #   - Si lo tienen del orden de cientos o miles de dolares, es un importe.
-print("\n    (2) PRUEBA DEL DENOMINADOR")
-print("        DebtRatio = deuda / ingreso. Sin ingreso no hay division, luego")
-print("        el campo deberia contener el importe de deuda en bruto.")
-print("        Se compara contra la deuda real (DebtRatio x MonthlyIncome) de")
-print("        las filas con ingreso normal.\n")
 
 normal = train[mi > 100]
 deuda_real = normal["DebtRatio"] * normal["MonthlyIncome"]
@@ -830,8 +810,6 @@ if gris.any():
     print(f"\n    (5) ZONA GRIS: {int(gris.sum())} filas con 1 < MonthlyIncome <= 100")
     print(f"        DebtRatio mediano = {dr_col[gris].median():,.1f}  |  "
           f"con DebtRatio > 2: {dr_col[gris].gt(2).mean()*100:.1f}%")
-    print("        Se comportan como los codificados, pero son muy pocas para")
-    print("        mover el umbral con evidencia. Quedan como ingreso valido.")
 
 
 # =============================================================================
@@ -946,8 +924,6 @@ for col in cols_mora:
     print(f"    {col:<38} {t0:>7.2f}% {t1:>7.2f}% {t1/t0:>6.1f}x "
           f"{tge1:>7.2f}% {tge1/t0:>6.1f}x {int(mge1.sum()):>8,}")
 
-print("\n    '= 1' aisla el efecto de UN episodio.")
-print("    '>= 1' mide el efecto de tener historial, e incluye reincidentes.")
 
 # =============================================================================
 # PARTE 7 — CORRELACIONES
@@ -967,19 +943,11 @@ titulo("PARTE 7 — CORRELACIONES")
 #   -1 = cuando una sube, la otra baja
 corr = train.corr(numeric_only=True)
 
-print("Metodo: Pearson sobre datos CRUDOS (centinelas incluidos)\n")
 
-print("Correlacion de cada variable con el TARGET (ordenada por magnitud):")
 corr_target = corr[TARGET].drop(TARGET).sort_values(key=abs, ascending=False)
 print(corr_target.to_string())
 
-print("\n  AVISO: estos valores con el target son pequenos y pueden enganar.")
-print("  RevolvingUtilization da -0.002 (parece inutil) y sin embargo por")
-print("  deciles va de 1.4% a 23.2% de default: es la variable mas predictiva.")
-print("  Pearson no ve relaciones no lineales. La vista fiable es la PARTE 6.")
 
-print("\nPares de variables MUY correlacionadas entre si (|corr| > 0.5):")
-print("(Importante: variables casi identicas confunden a la regresion logistica)")
 
 # CONTRASTE CON Y SIN CENTINELAS:
 #   Un punado de filas con un valor extremo identico en varias columnas puede
@@ -1011,9 +979,6 @@ if not encontrados:
 else:
     print(f"\n    Filas excluidas en 'sin cent.': {int(es_centinela.sum()):,} "
           f"({es_centinela.mean()*100:.2f}% de la muestra)")
-    print("    Un cambio grande significa que la correlacion la producian esas")
-    print("    pocas filas, no una relacion real entre las variables.")
-    print("    Conclusion: NO eliminar variables basandose en la correlacion cruda.")
 
 
 # =============================================================================
@@ -1117,7 +1082,9 @@ for ax, (col, _n) in zip(axes.flatten(), graficables):
     ax.axhline(tasa_default * 100, color="gray", linestyle="--", linewidth=1,
                label="tasa global")
     ax.set_title(f"{col}  ({len(tasa)} grupos)", fontsize=9)
-    ax.set_xlabel("decil (1 = valores mas bajos)", fontsize=7)
+    # Con muchos empates qcut fusiona deciles: solo son deciles si quedan 10.
+    etiqueta = "decil" if len(tasa) == 10 else "grupo de cuantiles"
+    ax.set_xlabel(f"{etiqueta} (1 = valores mas bajos)", fontsize=7)
     ax.set_ylabel("% default", fontsize=7)
 
     # El eje x es un indice de decil, no una magnitud continua: se marcan

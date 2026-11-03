@@ -5,16 +5,12 @@ Proyecto: Give Me Some Credit — Probability of Default
 
 POR QUE ESTE SCRIPT EXISTE
 
-Un ROC-AUC de 0.863 no le dice nada a un comite de credito. La pregunta
-real es: "¿cuanto dinero nos hace ganar este modelo, y donde ponemos el
-punto de corte?"
-
-Aqui traducimos las probabilidades del modelo a beneficio esperado, y
-demostramos algo que sorprende: un modelo con buen AUC puede ser
-ECONOMICAMENTE INUTIL si el negocio no lo necesita.
+Traduce las PD a beneficio esperado: punto de corte optimo M/(M+L), valor de
+cada modelo frente a no usar ninguno y sensibilidad al ratio perdida/margen.
+Un AUC alto no garantiza valor economico: depende de ese ratio.
 
 Se ejecuta con:  python 07_business_evaluation.py
-Evalua automaticamente todos los modelos que encuentre en artifacts/models/
+Evalua los modelos *_v1 de artifacts/models/; la sensibilidad usa el elegido en 06.
 """
 
 import sys
@@ -26,8 +22,10 @@ import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+plt.rcParams["axes.unicode_minus"] = False   # signo "-" normal en los ejes
 
 sys.path.insert(0, str(Path(__file__).parent))
+from src import artifacts
 from src.evaluation import umbral_optimo, beneficio, beneficio_sin_modelo
 
 if hasattr(sys.stdout, "reconfigure"):
@@ -70,7 +68,9 @@ def titulo(t):
 titulo("PASO 1 — DATOS Y MODELOS")
 
 modelos = {}
-for f in sorted(MODELOS.glob("*.joblib")):
+# Solo los modelos entrenados con train (*_v1). El modelo final de 06 vive en
+# models/final/ y ya vio las filas de validacion.
+for f in sorted(MODELOS.glob("*_v1.joblib")):
     art = joblib.load(f)
     rama = "woe" if "logistic" in f.stem else "trees"
     modelos[f.stem] = {"art": art, "rama": rama}
@@ -131,11 +131,9 @@ for nombre, p in predicciones.items():
               f"{r['morosos']:>8,} | ${r['beneficio']:>14,.0f}{marca}")
 
     # --- ¿Merece la pena buscar el umbral en los datos? --------------------
-    # Buscar el mejor umbral barriendo el MISMO conjunto donde luego se
-    # reporta el beneficio es hacer trampa: ese umbral esta ajustado a las
-    # particularidades de esas filas concretas.
-    # Para comprobarlo honestamente partimos validacion en dos mitades:
-    # buscamos el optimo en A y lo aplicamos en B, sin haberla mirado.
+    # Un umbral optimizado sobre el mismo conjunto donde se reporta el
+    # beneficio queda ajustado a esas filas. Se comprueba partiendo validacion
+    # en dos mitades: optimo en A, aplicado a B.
     mitad = len(y) // 2
     pA, yA = p[:mitad], y[:mitad]
     pB, yB = p[mitad:], y[mitad:]
@@ -153,7 +151,8 @@ for nombre, p in predicciones.items():
     print(f"      empirico -> ${ben_emp_B:>12,.0f}")
     print(f"      teorico  -> ${ben_teo_B:>12,.0f}   "
           f"{'(gana la formula)' if ben_teo_B >= ben_emp_B else '(gana el empirico)'}")
-    print("    -> El umbral se DERIVA de la economia, no se aprende de los datos.")
+    print(f"    -> Diferencia en B: ${ben_teo_B - ben_emp_B:+,.0f}. Se usa la formula porque no")
+    print("       depende de la muestra (docs/05_experimentos.md, E12).")
 
     # El beneficio que se reporta usa SIEMPRE el umbral teorico: no depende
     # de haber mirado ningun conjunto de evaluacion.
@@ -168,11 +167,16 @@ for nombre, p in predicciones.items():
 # =============================================================================
 titulo("PASO 4 — SENSIBILIDAD: ¿CUANDO COMPENSA USAR EL MODELO?")
 
-print("  Un modelo con buen AUC puede ser INUTIL si el negocio no lo necesita.")
-print("  Aqui variamos el ratio perdida/ganancia y vemos que pasa.\n")
+print("  Valor del modelo segun el ratio perdida/ganancia.\n")
 
-nombre_principal = next(iter(predicciones))
+# La sensibilidad se calcula con el modelo que eligio 06, no con el primero
+# que aparezca en disco.
+elegido = artifacts.cargar_json(METRICAS / "modelo_elegido.json").get("modelo")
+if elegido not in predicciones:
+    sys.exit("Falta artifacts/metrics/modelo_elegido.json. Ejecuta 06_evaluation.py antes.")
+nombre_principal = elegido
 p = predicciones[nombre_principal]
+print(f"  Modelo: {nombre_principal} (el elegido en 06)\n")
 
 print(f"  {'ratio L/M':>10} {'umbral opt':>11} {'sin modelo':>16} {'con modelo':>16} {'ganancia':>15}")
 print("  " + "-" * 74)
@@ -189,13 +193,13 @@ for ratio in [0.5, 1, 2, 3, 5, 7.5, 10, 15, 20]:
     print(f"  {ratio:>10.1f} {u:>11.4f} ${sin_m:>15,.0f} ${con_m:>15,.0f} ${con_m-sin_m:>14,.0f}")
 
 sens = pd.DataFrame(sens)
-print("\n  DOS CONCLUSIONES:")
-print("   1. Si las perdidas son BARATAS (ratio < 1), lo optimo es prestarle a")
-print("      todo el mundo: el modelo solo estorba rechazando gente que si pagaba.")
-print("   2. Cuanto mas CARO el default, mas vale el modelo. A partir de ~15x el")
-print("      negocio pierde dinero sin modelo y lo gana con el: ahi el modelo no")
-print("      es una mejora, es la diferencia entre existir o no.")
-print("\n   En credito al consumo el ratio tipico esta entre 5x y 15x.")
+bajo, alto = sens.iloc[0], sens.iloc[-1]
+print("\n  LECTURA:")
+print(f"   1. Con perdidas baratas ({bajo.ratio_L_M:g}x) el modelo apenas aporta: "
+      f"${bajo.ganancia:+,.0f} sobre {len(y):,} solicitudes.")
+print("      Casi todos quedarian aprobados igual.")
+print(f"   2. Con perdidas caras ({alto.ratio_L_M:g}x) aportaria ${alto.ganancia:+,.0f}; "
+      "por encima de ~15x el")
 
 
 # =============================================================================
@@ -217,7 +221,8 @@ ax.axvline(u_opt, ls=":", color="#a8392f", lw=2,
            label=f"umbral optimo = {u_opt:.4f}")
 ax.set_xlabel("Umbral de aprobacion (PD maxima aceptada)")
 ax.set_ylabel("Beneficio (millones de $)")
-ax.set_title(f"Beneficio segun el umbral\n(margen ${MARGEN}, perdida ${PERDIDA:,.0f})")
+# "\$" evita que matplotlib interprete el texto entre dos "$" como formula.
+ax.set_title(f"Beneficio segun el umbral\n(margen \\${MARGEN}, perdida \\${PERDIDA:,.0f})")
 ax.legend(fontsize=8)
 ax.grid(alpha=0.3)
 
@@ -232,7 +237,7 @@ ax.set_xticks(x)
 ax.set_xticklabels([f"{r:g}x" for r in sens["ratio_L_M"]], fontsize=8)
 ax.set_xlabel("Ratio perdida / ganancia")
 ax.set_ylabel("Beneficio (millones de $)")
-ax.set_title("¿Cuando compensa el modelo?")
+ax.set_title(f"¿Cuando compensa el modelo? ({nombre_principal})")
 ax.legend(fontsize=8)
 ax.grid(alpha=0.3, axis="y")
 
