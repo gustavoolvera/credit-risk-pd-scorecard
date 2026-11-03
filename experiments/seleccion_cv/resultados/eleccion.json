@@ -1,0 +1,9 @@
+{
+  "regla_cv": "AUC_cv >= max - 0.002; desempate por menor Calib_pp medio (CV 5x5 en train)",
+  "dentro_del_margen": [
+    "LightGBM",
+    "XGBoost"
+  ],
+  "elegido_regla_cv": "LightGBM",
+  "elegido_regla_validacion": "XGBoost"
+}

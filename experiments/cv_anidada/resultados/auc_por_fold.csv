@@ -1,0 +1,6 @@
+fold,auc_reportada,auc_anidada,params_elegidos,n_arboles,coincide_con_produccion
+1,0.8709499781533842,0.8713374271055706,"{""max_depth"": 3, ""min_child_weight"": 1, ""subsample"": 1.0, ""colsample_bytree"": 1.0}",287,False
+2,0.8649543848897135,0.8658116273880401,"{""max_depth"": 4, ""min_child_weight"": 10, ""subsample"": 0.9, ""colsample_bytree"": 0.9, ""reg_lambda"": 5}",377,False
+3,0.8617915204843757,0.861318047977039,"{""max_depth"": 4, ""min_child_weight"": 5, ""subsample"": 0.8, ""colsample_bytree"": 0.8}",199,False
+4,0.8657699740646597,0.8661815812317751,"{""max_depth"": 5, ""min_child_weight"": 20, ""subsample"": 0.8, ""colsample_bytree"": 0.6}",161,True
+5,0.8679573197247581,0.8676770289260817,"{""max_depth"": 7, ""min_child_weight"": 20, ""subsample"": 0.8, ""colsample_bytree"": 0.6}",107,False

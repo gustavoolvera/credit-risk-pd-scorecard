@@ -1,0 +1,17 @@
+{
+  "auc_reportada_media": 0.86628,
+  "auc_reportada_de_ddof0": 0.00306,
+  "auc_anidada_media": 0.86647,
+  "auc_anidada_de_ddof0": 0.00323,
+  "diferencia_anidada_menos_reportada": 0.00018,
+  "ic95_nadeau_bengio": [
+    -0.00084,
+    0.0012
+  ],
+  "p": 0.6482,
+  "folds_con_los_mismos_hiperparametros_que_produccion": 1,
+  "versiones": {
+    "python": "3.13.9",
+    "xgboost": "3.3.0"
+  }
+}
