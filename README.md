@@ -122,7 +122,7 @@ un negocio que pierde dinero de uno que gana
 01_eda.py … 08_scorecard.py   pipeline en orden (03b: interpretabilidad de la logística)
 predict.py                    puntuar solicitantes nuevos con el modelo final
 src/                          limpieza, WoE, métricas y persistencia (con tests)
-tests/                        106 pruebas
+tests/                        110 pruebas
 experiments/                  ablaciones, CV anidada, selección sin validación
 artifacts/metrics/            métricas publicadas (versionadas)
 artifacts/plots/, outputs/    gráficas de evaluación y del EDA

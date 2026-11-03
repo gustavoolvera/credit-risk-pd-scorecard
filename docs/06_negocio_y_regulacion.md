@@ -89,7 +89,7 @@ alrededor del 11.76%.
 **[MEDIDO]** Variando el ratio $L/M$ (LightGBM, el modelo elegido;
 `artifacts/metrics/business_sensibilidad.csv`):
 
-| $L/M$ | Umbral óptimo | Sin modelo | Con modelo | Ganancia |
+| $L/M$ | Umbral M/(M+L) | Sin modelo | Con modelo | Ganancia |
 |---|---|---|---|---|
 | **0.5** | 66.67% | $21,594,000 | $21,602,000 | **+$8,000** |
 | 1.0 | 50.00% | $20,792,000 | $20,885,600 | +$93,600 |
@@ -107,6 +107,12 @@ ejecución anterior; afirmaba una pérdida de $13,200 a 0.5× que el modelo
 elegido no produce.
 
 ### 6.3.1 Dos conclusiones estructurales
+
+![Beneficio según el umbral y sensibilidad](../artifacts/plots/07_evaluacion_negocio.png)
+
+Izquierda: beneficio de cada modelo según el umbral; la línea punteada es el
+umbral de equilibrio M/(M+L) que usa la política, y los círculos, el máximo
+observado en validación (solo referencia). Derecha: la tabla anterior.
 
 **1. Con pérdidas baratas, el modelo apenas aporta.** Con $L/M = 0.5$ casi todos
 quedan aprobados: el modelo añade $8,000 sobre 30,000 solicitudes (la regresión
@@ -352,6 +358,12 @@ capacidad de reproceso completo del portafolio en minutos.
 | 600 – 650 | 10,916 | 36.4% | **0.78%** | Aprobación preferente |
 
 Umbral de negocio (PD < 11.76%) = **545 puntos**; se aprobaría al 88.2%.
+
+![Scorecard: distribución, bandas y contribuciones](../artifacts/plots/08_scorecard.png)
+
+Intervalos de Wilson al 95 % en las bandas. Los puntos de cada atributo son
+diferencias frente al rango más frecuente de su variable: asociación con el
+riesgo, no efecto causal.
 
 **[RECOM]** La estructura habilita **pricing basado en riesgo**: en lugar de una
 decisión binaria, la tasa de interés puede escalarse con la PD, capturando parte

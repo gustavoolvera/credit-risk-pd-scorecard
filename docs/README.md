@@ -70,7 +70,7 @@ que sean equivalentes. Detalle en [04 §4.7.1](04_modelado.md#471-incertidumbre-
 | Fuga de datos en los datos | ✅ correlación máxima con el objetivo 0.3916; objetivo ausente de las features |
 | Fuga de datos en el proceso | ✅ variables e hiperparámetros se eligen sin validación; CV anidada sin optimismo detectable. 🟡 La elección final entre modelos sí usa validación (declarado, [04 §4.7.2](04_modelado.md#472-uso-de-validación-en-la-elección-del-modelo)) |
 | Determinismo | ✅ entrenamientos repetidos dan coeficientes y predicciones idénticos |
-| Cobertura de pruebas | 🟡 106 pruebas sobre `src/`; los scripts se validan por invariantes internos |
+| Cobertura de pruebas | 🟡 110 pruebas sobre `src/`; los scripts se validan por invariantes internos |
 | Interpretabilidad del scorecard | ✅ **corregido** — 0 incoherencias, VIF máx 1.3 (ver [H1](07_auditoria.md#h1)) |
 | Validación *out-of-time* | ❌ **no realizada** — requisito bajo Basilea/IFRS 9 (ver [capítulo 07](07_auditoria.md#h2)) |
 | *Reject inference* | ❌ no abordado (limitación estructural del conjunto de datos) |
