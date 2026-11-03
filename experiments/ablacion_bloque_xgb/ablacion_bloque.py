@@ -226,7 +226,7 @@ for ax, (mtr, nom, esc) in zip(axes, [("AUC", "Δ AUC", 1), ("KS", "Δ KS", 1),
     ax.grid(alpha=0.3, axis="x")
 axes[0].set_yticks(range(len(orden)))
 axes[0].set_yticklabels(orden, fontsize=9)
-fig.suptitle("XGBoost — ablación del bloque de atrasos vs A (CV 5×5, IC 95% Nadeau–Bengio; "
+fig.suptitle("XGBoost: ablación del bloque de atrasos vs A (CV 5×5, IC 95% Nadeau–Bengio; "
              "rojo = deterioro significativo)", fontsize=10.5)
 fig.text(0.01, 0.01, "Log Loss: positivo = peor. AUC y KS: negativo = peor.",
          fontsize=8, color="dimgray")

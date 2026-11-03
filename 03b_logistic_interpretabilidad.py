@@ -245,7 +245,7 @@ for i, v in enumerate(c["beta_std"]):
             va="center", ha="left" if v >= 0 else "right", fontsize=8)
 
 ax.set_xlabel(r"$\beta_j \cdot \sigma(\mathrm{WoE}_j)$   (cambio en log-odds por +1 desviación estándar)")
-ax.set_title("Coeficientes estandarizados — Regresión Logística WoE")
+ax.set_title("Coeficientes estandarizados: Regresión Logística WoE")
 ax.grid(alpha=0.3, axis="x")
 fig.text(0.01, 0.01,
          "σ calculada en train. Negativo = más WoE (bin más seguro) reduce la PD.  "
@@ -284,7 +284,7 @@ ax.annotate("Δ AP", xy=(1.02, len(p) - 0.3), xycoords=("axes fraction", "data")
 
 ax.set_xlabel("Caída media de ROC-AUC al permutar la variable  (± 1 desv. estándar, "
               f"{N_REPEATS} repeticiones)")
-ax.set_title("Permutation Feature Importance — Regresión Logística WoE (validación)")
+ax.set_title("Permutation Feature Importance: Regresión Logística WoE (validación)")
 ax.grid(alpha=0.3, axis="x")
 nota = (f"AUC base = {AUC_BASE:.4f} | AP base = {AP_BASE:.4f} | n = {len(X_val):,}.  "
         "Gris/(negativa) = permutar no empeora el modelo.  "

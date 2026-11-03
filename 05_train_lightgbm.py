@@ -372,7 +372,7 @@ for nombre, art, X_, color in [
 ax.plot(fpr, tpr, lw=2.2, color="#1f7a5a", alpha=0.7, label=f"LightGBM ({auc_val:.4f})")
 ax.plot([0, 1], [0, 1], "--", color="gray", lw=1, label="azar")
 ax.set_xlabel("Falsos positivos"); ax.set_ylabel("Verdaderos positivos")
-ax.set_title("Curvas ROC — los tres modelos"); ax.legend(fontsize=8, loc="lower right")
+ax.set_title("Curvas ROC: los tres modelos"); ax.legend(fontsize=8, loc="lower right")
 ax.grid(alpha=0.3)
 
 ax = axes[0, 1]
@@ -418,7 +418,7 @@ ax = axes[1, 1]
 t = imp.head(12).iloc[::-1]
 ax.barh(range(len(t)), t["gain"], color="#1f7a5a")
 ax.set_yticks(range(len(t))); ax.set_yticklabels(t["variable"], fontsize=7)
-ax.set_xlabel("Importancia (gain)"); ax.set_title("Variables mas usadas — LightGBM")
+ax.set_xlabel("Importancia (gain)"); ax.set_title("Variables mas usadas: LightGBM")
 ax.grid(alpha=0.3, axis="x")
 
 plt.tight_layout()

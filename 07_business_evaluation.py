@@ -237,7 +237,7 @@ ax.set_xlim(0, 40)   # por encima de 40% las curvas solo descienden
 ax.set_xlabel("Umbral de aprobación: PD máxima aceptada (%)")
 ax.set_ylabel("Beneficio (millones de USD)")
 # "\$" evita que matplotlib interprete el texto entre dos "$" como formula.
-ax.set_title(f"Beneficio según el umbral — validación (n = {n_val:,})\n"
+ax.set_title(f"Beneficio según el umbral, validación (n = {n_val:,})\n"
              f"margen \\${MARGEN} por préstamo pagado, pérdida \\${PERDIDA:,.0f} por default")
 ax.legend(fontsize=8, loc="lower right", frameon=False)
 ax.grid(alpha=0.3)
@@ -255,7 +255,7 @@ ax.set_xticks(x)
 ax.set_xticklabels([f"{r:g}×" for r in sens["ratio_L_M"]])
 ax.set_xlabel("Ratio pérdida / margen (L / M), con M = \\$800 fijo")
 ax.set_ylabel("Beneficio (millones de USD)")
-ax.set_title(f"¿Cuándo compensa el modelo? — {ETIQ.get(nombre_principal)}, validación\n"
+ax.set_title(f"¿Cuándo compensa el modelo? {ETIQ.get(nombre_principal)}, validación\n"
              "umbral recalculado en cada escenario: M/(M+L)")
 ax.legend(fontsize=8, loc="upper right", frameon=False)
 ax.grid(alpha=0.3, axis="y")

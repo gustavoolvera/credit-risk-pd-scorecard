@@ -319,7 +319,7 @@ elif _hay_shap:
     axes_s[0].set_yticks(range(len(t)))
     axes_s[0].set_yticklabels(t["variable"], fontsize=7)
     axes_s[0].set_xlabel("Impacto medio |SHAP| sobre los log-odds")
-    axes_s[0].set_title(f"Importancia global — {NOMBRE[stem_shap]}")
+    axes_s[0].set_title(f"Importancia global: {NOMBRE[stem_shap]}")
     axes_s[0].grid(alpha=0.3, axis="x")
 
     d2 = det.head(10).iloc[::-1]

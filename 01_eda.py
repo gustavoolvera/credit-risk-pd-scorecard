@@ -1053,7 +1053,7 @@ for ax, col in zip(axes.flatten(), features):
     ax.tick_params(labelsize=8)
 for ax in axes.flatten()[len(features):]:
     ax.set_visible(False)
-fig.suptitle("Distribucion CRUDA, sin recortar — si se ve aplastada, hay outliers",
+fig.suptitle("Distribucion CRUDA, sin recortar: si se ve aplastada, hay outliers",
              fontsize=13)
 plt.tight_layout()
 plt.savefig(OUTPUTS / "02_histogramas.png", dpi=110)
@@ -1118,7 +1118,7 @@ for ax, (col, _n) in zip(axes.flatten(), graficables):
 for ax in axes.flatten()[len(graficables):]:
     ax.set_visible(False)
 
-titulo_g3 = ("Tasa de default por decil — ¿la variable separa buenos de malos?"
+titulo_g3 = ("Tasa de default por decil: ¿la variable separa buenos de malos?"
              f"\nLinea gris discontinua = tasa global de default "
              f"({tasa_default*100:.2f}%): por encima, grupo mas riesgoso que la media")
 if omitidas:

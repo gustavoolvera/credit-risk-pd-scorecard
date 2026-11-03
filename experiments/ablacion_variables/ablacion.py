@@ -351,7 +351,7 @@ for ax, (mtr, nombre_m, escala) in zip(axes, [
     ax.grid(alpha=0.3, axis="x")
 axes[0].set_yticks(range(len(orden)))
 axes[0].set_yticklabels(orden, fontsize=8)
-fig.suptitle("Ablación vs modelo A — CV 5×5, IC 95% de Nadeau–Bengio "
+fig.suptitle("Ablación vs modelo A: CV 5×5, IC 95% de Nadeau–Bengio "
              "(rojo = deterioro significativo)", fontsize=11)
 fig.text(0.01, 0.01, "Log Loss: positivo = peor. Resto: negativo = peor.",
          fontsize=8, color="dimgray")

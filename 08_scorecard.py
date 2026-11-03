@@ -346,7 +346,7 @@ ax.axvline(umbral_score, color="black", ls="--", lw=1.5,
            label=f"corte {umbral_score:.0f} = PD {umbral_pd*100:.2f} % (regla económica)")
 ax.set_xlabel("Score (más puntos = menor riesgo)")
 ax.set_ylabel("Densidad")
-ax.set_title(f"Distribución del score — regresión logística WoE\nvalidación (n = {len(y_val):,})")
+ax.set_title(f"Distribución del score: regresión logística WoE\nvalidación (n = {len(y_val):,})")
 ax.legend(fontsize=8, loc="upper left", framealpha=0.95, edgecolor="lightgray")
 ax.grid(alpha=0.3)
 
@@ -370,7 +370,7 @@ ax.set_xticklabels([etiq_bandas.get(str(b), str(b)) for b in tabla_bandas.index]
 ax.set_ylim(0, max(hi_b) * 100 + 12)
 ax.set_xlabel("Banda de score")
 ax.set_ylabel("Tasa de default observada (%)")
-ax.set_title(f"Default por banda de score — IC 95 % de Wilson\nvalidación (n = {n_b.sum():,})")
+ax.set_title(f"Default por banda de score: IC 95 % de Wilson\nvalidación (n = {n_b.sum():,})")
 ax.grid(alpha=0.3, axis="y")
 
 # --- Contribucion de atributos -------------------------------------------------
@@ -387,7 +387,7 @@ ax.set_yticklabels(top["etiqueta"], fontsize=8)
 ax.set_xlim(top["puntos_rel"].min() * 1.15, 2)
 ax.axvline(0, color="black", lw=0.8)
 ax.set_xlabel("Puntos frente al rango más frecuente de la variable (0 = rango más común)")
-ax.set_title("Contribución de características al score — regresión logística WoE\n"
+ax.set_title("Contribución de características al score: regresión logística WoE\n"
              "14 atributos con mayor diferencia de puntos")
 ax.grid(alpha=0.3, axis="x")
 

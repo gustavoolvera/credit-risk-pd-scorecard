@@ -372,7 +372,7 @@ ax.plot([0, 1], [0, 1], "--", color="gray", lw=1, label="azar")
 i = int(np.argmax(tpr - fpr))
 ax.plot([fpr[i], fpr[i]], [fpr[i], tpr[i]], color="#a8392f", lw=2, label=f"KS = {ks:.4f}")
 ax.set_xlabel("Falsos positivos"); ax.set_ylabel("Verdaderos positivos")
-ax.set_title("Curva ROC — XGBoost"); ax.legend(fontsize=8, loc="lower right"); ax.grid(alpha=0.3)
+ax.set_title("Curva ROC: XGBoost"); ax.legend(fontsize=8, loc="lower right"); ax.grid(alpha=0.3)
 
 ax = axes[0, 1]
 ax.plot(cal.index, cal.pd_pred, "o-", color="#7a3a6a", alpha=0.7, label="PD predicha")
