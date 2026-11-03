@@ -1,4 +1,4 @@
-# 08 — Comparación metodológica
+# 08: Comparación metodológica
 
 [← Revisión técnica](07_auditoria.md) · [Índice](README.md) · [Siguiente: Guía del desarrollador →](09_guia_desarrollador.md)
 
@@ -23,7 +23,7 @@ implementada es la más apropiada.
 **Veredicto [RECOM]:** la elección implementada es **la correcta para este
 conjunto**, y la evidencia es contundente: winsorizar `RevolvingUtilization` en 1
 habría invalidado 2,640 registros con 37.50% de evento. Ningún método automático
-habría distinguido "sobregiro real de 1.5" de "código corrupto de 50,708" — solo
+habría distinguido "sobregiro real de 1.5" de "código corrupto de 50,708": solo
 el análisis de la tasa de evento por banda lo hace.
 
 **Coste de la elección:** requiere análisis manual por variable, lo que la hace
@@ -44,7 +44,7 @@ menos escalable a conjuntos con cientos de predictores.
 
 **Veredicto [RECOM]:** correcta. La evidencia del proyecto muestra un mecanismo
 **MNAR de nivel registro** (100% de solapamiento entre los faltantes de
-`MonthlyIncome` y `NumberOfDependents`), donde KNN y MICE —que asumen MAR—
+`MonthlyIncome` y `NumberOfDependents`), donde KNN y MICE (que asumen MAR)
 serían inapropiados: imputarían a partir de las mismas variables que están
 degradadas en esos registros.
 
@@ -59,7 +59,7 @@ necesitara cuantificar la incertidumbre de la imputación. Aquí no aplica.
 |---|---|---|---|
 | **WoE (implementado)** | Siddiqi (2006) | Escala log-odds; robusto a outliers; NaN como bin; interpretable | Requiere binning; pierde granularidad intra-bin |
 | One-hot | Estándar | Sin supuestos de orden | Alta dimensionalidad; no ordena los niveles |
-| Valor crudo | — | Máxima granularidad | Asume linealidad en logit; sensible a outliers |
+| Valor crudo | n/a | Máxima granularidad | Asume linealidad en logit; sensible a outliers |
 | Target encoding | Micci-Barreca (2001) | Compacto, captura no-linealidad | **Sobreajusta** sin CV anidada |
 | Splines / GAM | Hastie & Tibshirani (1990) | No-linealidad suave sin discretizar | Menos interpretable que una tabla de puntos |
 | Binning + one-hot | Alternativa a WoE | Cada bin con coeficiente propio | Más parámetros; no comparable entre variables |
@@ -90,7 +90,7 @@ una columna explícita en lugar de un valor dentro de otra columna.
 [H6](07_auditoria.md#h6)).
 
 A favor de lo implementado: los cuantiles demostradamente fallan aquí, y el
-binning manual incorporó hallazgos que ningún algoritmo habría producido —el
+binning manual incorporó hallazgos que ningún algoritmo habría producido: el
 corte explícito en 1.0 de `RevolvingUtilization` separa "dentro del límite" de
 "sobregiro", una distinción de negocio, no estadística.
 
@@ -108,7 +108,7 @@ justificar explícitamente la elección.
 | Método | Ventajas | Desventajas |
 |---|---|---|
 | **IV + VIF + restricción de signo (implementado)** | Combina poder predictivo, colinealidad e interpretabilidad | Manual; el conjunto de candidatos es finito y elegido a mano |
-| Solo IV | Simple, estándar en scorecards | **Ignora la correlación** — premia variables redundantes |
+| Solo IV | Simple, estándar en scorecards | **Ignora la correlación**: premia variables redundantes |
 | Stepwise (forward/backward) | Automático, clásico | Inflación de error tipo I; inestable |
 | LASSO ($L_1$) | Selección y regularización simultáneas | Selección inestable con predictores correlacionados |
 | Elastic Net | Estable con grupos correlacionados | Dos hiperparámetros que ajustar |
@@ -116,7 +116,7 @@ justificar explícitamente la elección.
 
 **Veredicto [RECOM]:** el criterio **"signos coherentes primero, AUC después"**
 es correcto para un scorecard y no es habitual verlo implementado
-explícitamente — la mayoría de los proyectos maximizan AUC y descubren los signos
+explícitamente: la mayoría de los proyectos maximizan AUC y descubren los signos
 invertidos al presentar el modelo.
 
 **Limitación reconocida:** solo se evaluaron 6 subconjuntos definidos a mano.
@@ -163,8 +163,8 @@ superan a la regresión logística. Aquí la ventaja es modesta: +0.0083 de AUC 
 la CV pareada ([04 §4.7.1](04_modelado.md#471-incertidumbre-de-la-comparación-diferencias-pareadas)).
 
 **Veredicto [RECOM]:** entrenar las tres familias y compararlas con validación
-cruzada es la práctica correcta. La conclusión —el *booster* gana de forma
-estadísticamente real pero por poco— es coherente con la literatura.
+cruzada es la práctica correcta. La conclusión (el *booster* gana de forma
+estadísticamente real pero por poco) es coherente con la literatura.
 
 **El intercambio de fondo:** 0.0069 de AUC (~$5 por solicitud) contra la
 capacidad de explicar cada rechazo con una tabla de puntos. En banca esa decisión
@@ -178,10 +178,10 @@ frecuentemente se resuelve a favor de la interpretabilidad.
 |---|---|---|---|
 | **Scorecard (implementado, lineal)** | Exacto por construcción | Nulo | **Exacta** |
 | **SHAP / TreeSHAP (implementado, árboles)** | Axiomas de Shapley; aditividad | $O(TLD^2)$ | **Exacta** para árboles |
-| `feature_importances_` | Ninguna | Nulo | **No fiable** (ver [E9](05_experimentos.md#e9--importancia-de-variables-inestabilidad-entre-algoritmos)) |
+| `feature_importances_` | Ninguna | Nulo | **No fiable** (ver [E9](05_experimentos.md#e9-importancia-de-variables-inestabilidad-entre-algoritmos)) |
 | LIME | Fidelidad local aproximada | Alto (remuestreo) | Aproximada, inestable |
 | Partial Dependence Plots | Efecto marginal medio | Medio | Sesgado con predictores correlacionados |
-| Counterfactual explanations | — | Alto | Útil para explicar al cliente |
+| Counterfactual explanations | n/a | Alto | Útil para explicar al cliente |
 
 **Veredicto [RECOM]:** correcta. Usar SHAP para el modelo elegido y el
 scorecard para el lineal cubre ambos casos con métodos de fidelidad exacta.
@@ -207,7 +207,7 @@ elección correcta, y la verificación con CV anidada es una práctica de rigor 
 habitual en proyectos de este tipo.
 
 **Deficiencia:** ausencia de validación temporal
-([H2](07_auditoria.md#h2)) — la única que mide lo que realmente importa para un
+([H2](07_auditoria.md#h2)): la única que mide lo que realmente importa para un
 modelo de crédito.
 
 ---
@@ -219,7 +219,7 @@ modelo de crédito.
 | **$M/(M+L)$ (implementado)** | Teoría de decisión bayesiana | Óptimo demostrable; **no requiere datos** | Depende de estimar $M$ y $L$ |
 | Maximizar F1 | Equilibrio precision/recall | Automático | Ignora la asimetría económica |
 | Índice de Youden ($\max$ TPR-FPR) | Punto de máximo KS | Simple | Supone costes simétricos |
-| Barrido empírico sobre validación | Directo | Aparentemente óptimo | **Sobreajusta** — demostrado en [E12](05_experimentos.md#e12--debe-buscarse-el-umbral-en-los-datos) |
+| Barrido empírico sobre validación | Directo | Aparentemente óptimo | **Sobreajusta**: demostrado en [E12](05_experimentos.md#e12-debe-buscarse-el-umbral-en-los-datos) |
 | Fijar tasa de aprobación objetivo | Restricción operativa | Alineado con el plan comercial | No optimiza beneficio |
 
 **Veredicto [RECOM]:** correcta, y **demostrada empíricamente superior** al

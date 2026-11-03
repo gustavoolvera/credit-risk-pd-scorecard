@@ -1,4 +1,4 @@
-# 05 — Registro de experimentos
+# 05: Registro de experimentos
 
 [← Modelado](04_modelado.md) · [Índice](README.md) · [Siguiente: Negocio y regulación →](06_negocio_y_regulacion.md)
 
@@ -11,7 +11,7 @@ historial de decisiones descartadas es tan informativo como el resultado final.
 
 ---
 
-## E1 — Umbral de `RevolvingUtilizationOfUnsecuredLines`
+## E1: Umbral de `RevolvingUtilizationOfUnsecuredLines`
 
 **Objetivo.** Determinar a partir de qué valor la variable deja de representar
 deuda real.
@@ -55,7 +55,7 @@ puede ser catastrófica si contradice la evidencia empírica.
 
 ---
 
-## E2 — Códigos centinela 96/98
+## E2: Códigos centinela 96/98
 
 **Objetivo.** Determinar si los valores 96 y 98 son datos o códigos.
 
@@ -75,7 +75,7 @@ valores legítimos se agrupan a partir de 4 porque la relación satura.
 
 ---
 
-## E3 — Ingresos codificados como cero
+## E3: Ingresos codificados como cero
 
 **Objetivo.** Verificar si `MonthlyIncome = 0` es un ingreso real.
 
@@ -100,9 +100,9 @@ trabajo: esa fealdad es el hallazgo.**
 
 ---
 
-## E4 — Bug en `peor_atraso`
+## E4: Bug en `peor_atraso`
 
-**Objetivo.** (No planificado — detectado al revisar las tablas WoE.)
+**Objetivo.** (No planificado: detectado al revisar las tablas WoE.)
 
 **Síntoma [MEDIDO].**
 
@@ -115,7 +115,7 @@ Diferencia exacta: **214 filas**, las de los centinelas.
 
 **Causa.** `peor_atraso` se calculaba con comparaciones `> 0`. Como `NaN > 0`
 evalúa a `False`, las filas con centinela quedaban en `peor_atraso = 0` ("sin
-atrasos") — el grupo más seguro — teniendo 54.67% de evento.
+atrasos"), el grupo más seguro, teniendo 54.67% de evento.
 
 **Corrección.**
 
@@ -132,7 +132,7 @@ bajó de 2.86% a 2.74%.
 
 ---
 
-## E5 — Selección de variables para la regresión logística
+## E5: Selección de variables para la regresión logística
 
 **Objetivo.** Elegir el subconjunto que evite multicolinealidad.
 
@@ -142,7 +142,7 @@ bajó de 2.86% a 2.74%.
 coeficientes con signo invertido**, incluido uno que afirmaba "más episodios de
 mora leve → menos riesgo".
 
-**Causa raíz.** Todas las variables derivadas —no solo las de morosidad—
+**Causa raíz.** Todas las variables derivadas (no solo las de morosidad)
 competían con sus variables padre:
 
 | Derivada | Compite con |
@@ -167,7 +167,7 @@ de negocio sólida no aportaron poder predictivo y rompieron la interpretabilida
 
 ---
 
-## E6 — Sensibilidad al parámetro `C`
+## E6: Sensibilidad al parámetro `C`
 
 **Objetivo.** Determinar si la regularización importa.
 
@@ -183,11 +183,11 @@ Los parámetros que movieron la aguja en este proyecto fueron los de limpieza
 
 ---
 
-## E7 — Sobreajuste de XGBoost con valores por defecto
+## E7: Sobreajuste de XGBoost con valores por defecto
 
 **Objetivo.** Establecer la línea base antes de ajustar.
 
-**Resultado [MEDIDO].** `AUC ajuste 0.92919` / `AUC validación 0.85592` — brecha
+**Resultado [MEDIDO].** `AUC ajuste 0.92919` / `AUC validación 0.85592`: brecha
 de 7.3 puntos, y **peor que la regresión logística**.
 
 Tras el ajuste: `0.87651 / 0.86854`, brecha de 0.8 puntos.
@@ -197,7 +197,7 @@ más común al usar la biblioteca.
 
 ---
 
-## E8 — ¿Aportan las derivadas a los árboles?
+## E8: ¿Aportan las derivadas a los árboles?
 
 **Objetivo.** Verificar si la conclusión de E5 se extiende a modelos no lineales.
 
@@ -218,7 +218,7 @@ dentro del ruido y no hay coeficientes que puedan invertirse.
 
 ---
 
-## E9 — Importancia de variables: inestabilidad entre algoritmos
+## E9: Importancia de variables: inestabilidad entre algoritmos
 
 **Objetivo.** Verificar si `feature_importances_` es interpretable.
 
@@ -249,7 +249,7 @@ artefacto.
 
 ---
 
-## E10 — Comparación de los tres modelos (histórico)
+## E10: Comparación de los tres modelos (histórico)
 
 Primera comparación en CV de 5 folds idénticos, cuando la regresión logística
 aún tenía 18 variables (antes de E16). Concluyó que ambos boosters superan a la
@@ -260,7 +260,7 @@ con los modelos actuales e IC de Nadeau–Bengio. Las conclusiones no cambiaron.
 
 ---
 
-## E11 — Validación cruzada anidada
+## E11: Validación cruzada anidada
 
 **Objetivo.** Verificar si el AUC reportado está inflado por selección.
 
@@ -301,7 +301,7 @@ script versionado. La conclusión cualitativa no cambia.
 
 ---
 
-## E12 — ¿Debe buscarse el umbral en los datos?
+## E12: ¿Debe buscarse el umbral en los datos?
 
 **Objetivo.** Contrastar el umbral teórico $M/(M+L)$ contra el hallado
 empíricamente.
@@ -330,7 +330,7 @@ con la ejecución actual.
 
 ---
 
-## E13 — Ensemble
+## E13: Ensemble
 
 **Objetivo.** Verificar si promediar mejora.
 
@@ -343,7 +343,7 @@ ganancia por promediado.
 
 ---
 
-## E14 — ¿Es aplicable el PSI?
+## E14: ¿Es aplicable el PSI?
 
 **Objetivo.** Evaluar si procede implementar monitoreo de estabilidad
 poblacional.
@@ -368,7 +368,7 @@ rigor.
 
 ---
 
-## E15 — Reproducibilidad desde cero
+## E15: Reproducibilidad desde cero
 
 **Método.** Copia limpia del repositorio (solo archivos versionables), entorno
 virtual nuevo con `requirements.txt`, datos en `data/`, y ejecución de `01`–`08`,
@@ -385,7 +385,7 @@ queda en el historial de git.
 
 ---
 
-## E16 — Corrección de H1: coherencia completa de signos
+## E16: Corrección de H1: coherencia completa de signos
 
 **Objetivo.** Eliminar los coeficientes que contradicen la dirección univariada
 de su variable.
@@ -454,7 +454,7 @@ comprobación anterior.
 
 ---
 
-## E17 — Ablación de variables del modelo H
+## E17: Ablación de variables del modelo H
 
 **Objetivo.** Determinar si las cuatro variables con menor permutation
 importance pueden eliminarse sin deteriorar discriminación, calibración,
@@ -580,7 +580,7 @@ decisión de mantener H.
 
 ---
 
-## E18 — Variables de atraso en XGBoost: redundancia y riesgo de fuga
+## E18: Variables de atraso en XGBoost: redundancia y riesgo de fuga
 
 > Análisis de **XGBoost**, el modelo elegido hasta el 2026-11-03. Desde la selección
 > por CV en train el elegido es LightGBM ([04 §4.7.2](04_modelado.md#472-uso-de-validación-en-la-elección-del-modelo));
@@ -650,7 +650,7 @@ y `xgboost_v1.joblib`. La ablación del bloque con reentrenamiento está en E19.
 
 ---
 
-## E19 — Ablación del bloque de atrasos en XGBoost
+## E19: Ablación del bloque de atrasos en XGBoost
 
 > Análisis de **XGBoost**, el modelo elegido hasta el 2026-11-03. Desde la selección
 > por CV en train el elegido es LightGBM ([04 §4.7.2](04_modelado.md#472-uso-de-validación-en-la-elección-del-modelo));
@@ -693,7 +693,7 @@ cambia de forma significativa en ningún escenario.
 
 | Escenario | AUC | KS | Log Loss | Beneficio total | Decisiones distintas a A |
 |---|---|---|---|---|---|
-| A | 0.86854 | 0.5832 | 0.1764 | $15,777,200 | — |
+| A | 0.86854 | 0.5832 | 0.1764 | $15,777,200 | n/a |
 | B | 0.80933 | 0.4762 | 0.2024 | $14,032,000 (**-$1,745,200**) | 3,899 |
 | C | 0.86805 | 0.5820 | 0.1765 | $15,777,200 | 397 |
 | D | 0.86924 | 0.5877 | 0.1761 | $15,798,800 | 334 |
@@ -741,7 +741,7 @@ de cada mitad).
 | 7 | Las gráficas del EDA deben usar datos crudos; recortar oculta el hallazgo. |
 | 8 | Aplicar una técnica donde no hay nada que medir es relleno. |
 | 9 | Una comprobación con exenciones puede ocultar defectos: eximir a los indicadores del control de signos permitió que tres llegaran al modelo con la dirección invertida. |
-| 10 | En un scorecard WoE los indicadores de faltante son redundantes por construcción — el bin `FALTANTE` ya los codifica. |
+| 10 | En un scorecard WoE los indicadores de faltante son redundantes por construcción: el bin `FALTANTE` ya los codifica. |
 | 11 | Una importancia por permutación ≈ 0 no prueba irrelevancia: la ablación pareada es la prueba directa (E17). |
 | 12 | Equivalencia no es superioridad: un criterio de parsimonia debe fijarse antes de ver los resultados, no después (E17). |
 | 13 | Con variables redundantes, la importancia se mide por bloques: cada variable de atraso es prescindible por separado, pero quitar el bloque cuesta 0.058 de AUC (E18, E19). |

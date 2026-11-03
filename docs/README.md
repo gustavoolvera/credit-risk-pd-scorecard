@@ -1,6 +1,6 @@
-# Manual Técnico — Modelo de Probabilidad de Default (PD)
+# Manual Técnico: Modelo de Probabilidad de Default (PD)
 
-**Give Me Some Credit — Sistema de Credit Scoring**
+**Give Me Some Credit: Sistema de Credit Scoring**
 
 Documentación técnica completa del repositorio. Cubre arquitectura de software,
 fundamentos matemáticos, ingeniería de datos, modelado, evaluación, impacto de
@@ -22,16 +22,16 @@ solo esta carpeta.
 
 | Capítulo | Contenido | Audiencia principal |
 |---|---|---|
-| [01 — Arquitectura](01_arquitectura.md) | Estructura del repositorio, cada fichero, módulo, función y constante. Grafo de dependencias y orden de ejecución. | Ingeniero de software, MLOps |
-| [02 — Fundamentos matemáticos](02_fundamentos_matematicos.md) | Toda la matemática del proyecto, derivada desde cero: WoE, IV, regresión logística, gradient boosting, ROC/AUC/KS/Gini, calibración, SHAP, scorecard. | Investigador cuantitativo, estudiante de posgrado |
-| [03 — Pipeline de datos](03_pipeline_datos.md) | Limpieza, ingeniería de variables y binning, línea a línea. | Data engineer, analista |
-| [04 — Modelado](04_modelado.md) | Las tres familias de modelos, cada hiperparámetro y su justificación. | ML engineer |
-| [05 — Experimentos](05_experimentos.md) | Todo experimento ejecutado, con objetivo, método, resultado e interpretación. | Investigador, validador |
-| [06 — Negocio y regulación](06_negocio_y_regulacion.md) | Traducción a dólares, ECL, Basilea II/III, IFRS 9, capital, umbrales. | Riesgos, negocio, regulatorio |
-| [07 — Revisión técnica interna](07_auditoria.md) | Revisión crítica hecha por el propio autor (no es una validación independiente). Defectos detectados, causa, impacto y corrección. | Validación de modelos |
-| [08 — Comparación metodológica](08_comparacion_metodologica.md) | El enfoque implementado frente a las alternativas de academia e industria. | Investigador, arquitecto |
-| [09 — Guía del desarrollador](09_guia_desarrollador.md) | Instalación, ejecución, extensión, depuración, errores comunes. | Cualquier desarrollador |
-| [10 — Referencias](10_referencias.md) | Fuentes, y separación explícita entre teoría establecida, detalles de implementación y recomendaciones propias. | Todos |
+| [01: Arquitectura](01_arquitectura.md) | Estructura del repositorio, cada fichero, módulo, función y constante. Grafo de dependencias y orden de ejecución. | Ingeniero de software, MLOps |
+| [02: Fundamentos matemáticos](02_fundamentos_matematicos.md) | Toda la matemática del proyecto, derivada desde cero: WoE, IV, regresión logística, gradient boosting, ROC/AUC/KS/Gini, calibración, SHAP, scorecard. | Investigador cuantitativo, estudiante de posgrado |
+| [03: Pipeline de datos](03_pipeline_datos.md) | Limpieza, ingeniería de variables y binning, línea a línea. | Data engineer, analista |
+| [04: Modelado](04_modelado.md) | Las tres familias de modelos, cada hiperparámetro y su justificación. | ML engineer |
+| [05: Experimentos](05_experimentos.md) | Todo experimento ejecutado, con objetivo, método, resultado e interpretación. | Investigador, validador |
+| [06: Negocio y regulación](06_negocio_y_regulacion.md) | Traducción a dólares, ECL, Basilea II/III, IFRS 9, capital, umbrales. | Riesgos, negocio, regulatorio |
+| [07: Revisión técnica interna](07_auditoria.md) | Revisión crítica hecha por el propio autor (no es una validación independiente). Defectos detectados, causa, impacto y corrección. | Validación de modelos |
+| [08: Comparación metodológica](08_comparacion_metodologica.md) | El enfoque implementado frente a las alternativas de academia e industria. | Investigador, arquitecto |
+| [09: Guía del desarrollador](09_guia_desarrollador.md) | Instalación, ejecución, extensión, depuración, errores comunes. | Cualquier desarrollador |
+| [10: Referencias](10_referencias.md) | Fuentes, y separación explícita entre teoría establecida, detalles de implementación y recomendaciones propias. | Todos |
 
 ---
 
@@ -71,8 +71,8 @@ que sean equivalentes. Detalle en [04 §4.7.1](04_modelado.md#471-incertidumbre-
 | Fuga de datos en el proceso | ✅ variables e hiperparámetros se eligen sin validación; CV anidada sin optimismo detectable. 🟡 La elección final entre modelos sí usa validación (declarado, [04 §4.7.2](04_modelado.md#472-uso-de-validación-en-la-elección-del-modelo)) |
 | Determinismo | ✅ entrenamientos repetidos dan coeficientes y predicciones idénticos |
 | Cobertura de pruebas | 🟡 110 pruebas sobre `src/`; los scripts se validan por invariantes internos |
-| Interpretabilidad del scorecard | ✅ **corregido** — 0 incoherencias, VIF máx 1.3 (ver [H1](07_auditoria.md#h1)) |
-| Validación *out-of-time* | ❌ **no realizada** — requisito bajo Basilea/IFRS 9 (ver [capítulo 07](07_auditoria.md#h2)) |
+| Interpretabilidad del scorecard | ✅ **corregido**: 0 incoherencias, VIF máx 1.3 (ver [H1](07_auditoria.md#h1)) |
+| Validación *out-of-time* | ❌ **no realizada**: requisito bajo Basilea/IFRS 9 (ver [capítulo 07](07_auditoria.md#h2)) |
 | *Reject inference* | ❌ no abordado (limitación estructural del conjunto de datos) |
 
 ### Veredicto sobre despliegue
@@ -81,8 +81,8 @@ que sean equivalentes. Detalle en [04 §4.7.1](04_modelado.md#471-incertidumbre-
 defecto de atribución del scorecard (H1) **ha sido corregido**, pero persisten
 dos brechas estructurales exigidas por la práctica supervisora:
 
-- **H2 — sin validación *out-of-time***
-- **H3 — sin marco de monitoreo**
+- **H2: sin validación *out-of-time***
+- **H3: sin marco de monitoreo**
 
 Ninguna de las dos es subsanable con este conjunto de datos, que carece de
 dimensión temporal. El detalle y la ruta de remediación están en el

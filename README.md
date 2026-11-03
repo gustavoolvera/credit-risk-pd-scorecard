@@ -1,4 +1,4 @@
-# Probability of Default — Give Me Some Credit
+# Probability of Default: Give Me Some Credit
 
 Modelo de probabilidad de default (PD) para crédito al consumo: estima la
 probabilidad de que un cliente tenga un atraso de 90 días o más en los dos años
@@ -186,3 +186,8 @@ y tienen su propio README.
 | [06 Negocio y regulación](docs/06_negocio_y_regulacion.md) | Valor económico, umbrales, ECL, Basilea, equidad |
 | [07 Revisión técnica](docs/07_auditoria.md) | Revisión interna: hallazgos, impacto y corrección |
 | [08–10](docs/README.md) | Comparación metodológica, guía de desarrollo, referencias |
+
+## Licencia
+
+Código bajo licencia [MIT](LICENSE). Los datos de Kaggle no se incluyen y
+están sujetos a las reglas de la competición.

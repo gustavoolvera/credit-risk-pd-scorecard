@@ -1,4 +1,4 @@
-# 09 — Guía del usuario y del desarrollador
+# 09: Guía del usuario y del desarrollador
 
 [← Comparación metodológica](08_comparacion_metodologica.md) · [Índice](README.md) · [Siguiente: Referencias →](10_referencias.md)
 
@@ -7,13 +7,13 @@
 ## ⛔ 9.0 Antes de usar este sistema: dos brechas abiertas
 
 > **Este proyecto NO es desplegable en un entorno bancario en producción.**
-> Todo lo que sigue explica cómo ejecutarlo, extenderlo y mantenerlo — pero
+> Todo lo que sigue explica cómo ejecutarlo, extenderlo y mantenerlo, pero
 > **no** cómo ponerlo en producción, porque no está listo para eso.
 
 Dos hallazgos críticos permanecen **abiertos** y ninguno es subsanable con el
 conjunto de datos actual:
 
-### H2 — Sin validación *out-of-time*
+### H2: Sin validación *out-of-time*
 
 **Qué falta.** Toda la validación es sobre particiones **aleatorias** de la misma
 población. No existe evaluación sobre un periodo temporal posterior.
@@ -26,7 +26,7 @@ validación aleatoria y 0.72 doce meses después, por cambios en el ciclo
 económico, en la política de originación o en la composición de la demanda.
 
 **Por qué no se puede arreglar aquí.** `cs-training.csv` **no contiene ninguna
-marca temporal** —ni fecha de originación, ni de solicitud, ni cohorte—. Es
+marca temporal** (ni fecha de originación, ni de solicitud, ni cohorte). Es
 imposible construir una partición temporal.
 
 **Qué haría falta.**
@@ -35,7 +35,7 @@ imposible construir una partición temporal.
    $T+1, T+2, \dots$
 3. Curvas de AUC y KS por cohorte para detectar degradación.
 
-### H3 — Sin marco de monitoreo ni backtesting
+### H3: Sin marco de monitoreo ni backtesting
 
 **Qué falta.** No existe procedimiento definido para detectar degradación tras el
 despliegue.
@@ -45,7 +45,7 @@ continua. Sin ella, la degradación se detecta **cuando ya ha generado pérdidas
 
 **Nota importante.** El PSI se evaluó y se descartó con justificación correcta:
 con particiones aleatorias de la misma población, el PSI máximo entre las 15
-variables es **0.00073** frente a un umbral de alerta de 0.10 — no hay deriva que
+variables es **0.00073** frente a un umbral de alerta de 0.10: no hay deriva que
 medir. El descarte fue correcto; lo que falta es el **marco**, que solo puede
 construirse cuando existan datos temporales.
 
@@ -63,9 +63,9 @@ construirse cuando existan datos temporales.
 
 | Hallazgo | Estado |
 |---|---|
-| H1 — Scorecard con atribución contraria al riesgo | ✅ corregido y verificado |
-| H4 — Punto ciego en la comprobación de signos | ✅ corregido, 6 pruebas nuevas |
-| H11 — Código muerto | ✅ corregido |
+| H1: Scorecard con atribución contraria al riesgo | ✅ corregido y verificado |
+| H4: Punto ciego en la comprobación de signos | ✅ corregido, 6 pruebas nuevas |
+| H11: Código muerto | ✅ corregido |
 
 Detalle completo en el [capítulo 07](07_auditoria.md).
 
@@ -236,16 +236,16 @@ for s in 01 02 03 04 05 06 07 08; do python ${s}_*.py || break; done
 1. Implementarla en `crear_features()` (`src/preprocessing.py`).
 2. Si debe entrar en la rama WoE, añadir sus cortes a `BINS_CONTINUAS` o
    `BINS_CONTEO` en `src/woe.py`.
-3. Si es un indicador binario, nombrarlo con prefijo `flag_` — se detecta solo.
+3. Si es un indicador binario, nombrarlo con prefijo `flag_`: se detecta solo.
 4. Re-ejecutar `02` en adelante.
 5. **Comprobar que no rompe los signos**: `03` fallará el criterio de selección
    si introduce colinealidad.
 
 **Advertencia [RECOM]:** el proyecto demostró dos veces que añadir variables
 resta. Las 7 derivadas no aportaron nada y rompieron la interpretabilidad
-([E5](05_experimentos.md#e5--selección-de-variables-para-la-regresión-logística)),
+([E5](05_experimentos.md#e5-selección-de-variables-para-la-regresión-logística)),
 y los 7 indicadores de calidad introducían colinealidad perfecta con los bins
-`FALTANTE` ([E16](05_experimentos.md#e16--corrección-de-h1-coherencia-completa-de-signos)).
+`FALTANTE` ([E16](05_experimentos.md#e16-corrección-de-h1-coherencia-completa-de-signos)).
 El scorecard final usa **solo las 10 variables originales**.
 
 Toda variable nueva debe justificar su existencia con una mejora **medida** en
@@ -335,7 +335,7 @@ python -c "import ast,glob; [ast.parse(open(f,encoding='utf-8').read()) for f in
 Definido en `.gitignore`: `datasets/`, `artifacts/{models,preprocessors,submissions}`,
 `*.png`, `__pycache__/`, `.pytest_cache/`.
 
-**Sí se versiona** `artifacts/metrics/` — son ficheros de texto pequeños que
+**Sí se versiona** `artifacts/metrics/`: son ficheros de texto pequeños que
 documentan los resultados publicados y permiten contrastar el README sin
 re-ejecutar nada.
 
@@ -352,8 +352,8 @@ brechas descritas en [§9.0](#-90-antes-de-usar-este-sistema-dos-brechas-abierta
 | Serialización portable (ONNX/PMML) | ❌ | `joblib` acopla a la versión de Python y scikit-learn |
 | API de inferencia | ❌ | `predict.py` es CLI por lotes |
 | Registro de decisiones | ❌ | Necesario para auditoría y disputas |
-| Monitoreo (PSI/CSI/calibración) | ❌ | **Bloqueante** — ver [§9.0](#-90-antes-de-usar-este-sistema-dos-brechas-abiertas) |
-| Validación *out-of-time* | ❌ | **Bloqueante** — ver [§9.0](#-90-antes-de-usar-este-sistema-dos-brechas-abiertas) |
+| Monitoreo (PSI/CSI/calibración) | ❌ | **Bloqueante**: ver [§9.0](#-90-antes-de-usar-este-sistema-dos-brechas-abiertas) |
+| Validación *out-of-time* | ❌ | **Bloqueante**: ver [§9.0](#-90-antes-de-usar-este-sistema-dos-brechas-abiertas) |
 | Pruebas A/B o *champion–challenger* | ❌ | |
 | Plan de reversión | ❌ | |
 | Validación independiente (3.ª línea) | ❌ | |

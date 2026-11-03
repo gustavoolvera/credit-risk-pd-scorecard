@@ -1,4 +1,4 @@
-# 10 — Referencias y niveles de evidencia
+# 10: Referencias y niveles de evidencia
 
 [← Guía del desarrollador](09_guia_desarrollador.md) · [Índice](README.md)
 
@@ -127,7 +127,7 @@ repositorio y se regeneran con los scripts incluidos.
 ## 10.4 Regulación
 
 - **BCBS** (2006). *International Convergence of Capital Measurement and Capital
-  Standards: A Revised Framework — Comprehensive Version* (Basilea II).
+  Standards: A Revised Framework, Comprehensive Version* (Basilea II).
   Bank for International Settlements.
   → §452: definición de default. §272 y siguientes: fórmula IRB de capital y
   correlación de activos. Base de
@@ -153,7 +153,7 @@ repositorio y se regeneran con los scripts incluidos.
   → Gobierno del riesgo de modelo: desarrollo, validación independiente y uso.
   Base de la observación de proceso en [§7.5](07_auditoria.md#75-opinión-de-validación).
 
-- **CFPB / Regulation B** — Equal Credit Opportunity Act, 12 CFR Part 1002.
+- **CFPB / Regulation B**: Equal Credit Opportunity Act, 12 CFR Part 1002.
   → Uso de la edad en decisiones de crédito; requisito de sistema
   *empirically derived, demonstrably and statistically sound*.
   Base de [§6.7.1](06_negocio_y_regulacion.md#671-variables-potencialmente-sensibles).
@@ -178,7 +178,7 @@ repositorio y se regeneran con los scripts incluidos.
 - **Varma, S. & Simon, R.** (2006). *Bias in Error Estimation when Using
   Cross-Validation for Model Selection*. BMC Bioinformatics, 7(91).
   → Justificación de la validación cruzada anidada
-  ([E11](05_experimentos.md#e11--validación-cruzada-anidada)).
+  ([E11](05_experimentos.md#e11-validación-cruzada-anidada)).
 
 - **Cawley, G. C. & Talbot, N. L. C.** (2010). *On Over-fitting in Model
   Selection and Subsequent Selection Bias in Performance Evaluation*. JMLR, 11.
@@ -220,7 +220,7 @@ repositorio y se regeneran con los scripts incluidos.
 
 ## 10.7 Origen de los datos
 
-**Give Me Some Credit** — competencia de Kaggle, 2011.
+**Give Me Some Credit**: competencia de Kaggle, 2011.
 https://www.kaggle.com/c/GiveMeSomeCredit
 
 **[MEDIDO]** Lo verificado sobre el origen:
@@ -236,7 +236,7 @@ https://www.kaggle.com/c/GiveMeSomeCredit
 
 **No verificado:** la institución de origen (anónima por diseño) y la metodología
 exacta de partición train/test. Lo más probable es un muestreo aleatorio simple
-—práctica estándar en competencias de la época— pero **no se encontró
+(práctica estándar en competencias de la época) pero **no se encontró
 confirmación documental**.
 
 ---
@@ -248,7 +248,7 @@ confirmación documental**.
 | **[TEORÍA]** | Resultado establecido en la literatura o normativa | Consultando la fuente citada |
 | **[IMPL]** | Cómo está implementado en este repositorio | Leyendo el código |
 | **[MEDIDO]** | Número obtenido ejecutando el código | Re-ejecutando los scripts |
-| **[RECOM]** | Recomendación u opinión del autor de la documentación | No verificable — es juicio profesional |
+| **[RECOM]** | Recomendación u opinión del autor de la documentación | No verificable: es juicio profesional |
 
 **Advertencia final.** Las afirmaciones **[RECOM]** son las que más cuidado
 requieren: representan criterio profesional, no hechos establecidos. En un

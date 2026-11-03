@@ -1,7 +1,7 @@
 # Validación cruzada anidada (E11)
 
 Documentado en
-[docs/05_experimentos.md — E11](../../docs/05_experimentos.md#e11--validación-cruzada-anidada).
+[docs/05_experimentos.md: E11](../../docs/05_experimentos.md#e11-validación-cruzada-anidada).
 
 **Pregunta.** La CV de XGBoost (0.86628) usa hiperparámetros elegidos con filas
 que después aparecen en sus folds de prueba. ¿Infla eso el AUC?

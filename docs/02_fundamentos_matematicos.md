@@ -1,4 +1,4 @@
-# 02 — Fundamentos matemáticos, estadísticos y financieros
+# 02: Fundamentos matemáticos, estadísticos y financieros
 
 [← Arquitectura](01_arquitectura.md) · [Índice](README.md) · [Siguiente: Pipeline de datos →](03_pipeline_datos.md)
 
@@ -23,7 +23,7 @@ $$\boxed{\ \text{PD}(\mathbf{x}) = P(Y=1 \mid \mathbf{X}=\mathbf{x})\ }$$
 |---|---|---|
 | $\mathbf{X}$ | Vector de características | $\mathbb{R}^{p}$, aquí $p = 10$ originales |
 | $Y$ | Indicador de incumplimiento | $\{0, 1\}$ |
-| $t_0$ | Momento de la decisión de crédito | — |
+| $t_0$ | Momento de la decisión de crédito | n/a |
 | $\text{PD}$ | Probability of Default | $[0,1]$ |
 
 ### 2.1.2 La distinción crítica: ventana de observación vs. ventana de desempeño
@@ -58,7 +58,7 @@ días es una **tasa de reincidencia**, no una tautología.
 
 **Implicación para el diseño [RECOM]:** el 65.4% de los eventos ocurre en
 individuos con historial de 90+ días limpio. El valor del modelo reside
-precisamente en detectarlos mediante otras señales — principalmente la
+precisamente en detectarlos mediante otras señales, principalmente la
 utilización de crédito, que capta deterioro financiero *antes* de que se
 materialice en mora formal.
 
@@ -189,7 +189,7 @@ largo de esa variable.
 | $0.02 – 0.10$ | Débil |
 | $0.10 – 0.30$ | Medio |
 | $0.30 – 0.50$ | Fuerte |
-| $> 0.50$ | Sospechoso — investigar posible fuga |
+| $> 0.50$ | Sospechoso: investigar posible fuga |
 
 ### 2.3.3 Limitación fundamental del IV
 
@@ -213,7 +213,7 @@ reempaquetamientos unas de otras:
 **120,000 de 120,000 filas (100%)**.
 
 **Analogía:** cinco testigos entrevistados por separado que coinciden con gran
-detalle puntúan altísimo cada uno — hasta que se descubre que todos lo oyeron de
+detalle puntúan altísimo cada uno, hasta que se descubre que todos lo oyeron de
 la misma persona. No hay cinco testimonios; hay uno repetido cinco veces.
 
 **Consecuencia práctica [RECOM]:** el IV nunca debe usarse como criterio único
@@ -268,7 +268,7 @@ evento.
 
 **En este proyecto** $x_i$ es un valor WoE, también en log-odds. Un
 $\beta_i \approx -1$ significa que el modelo adopta el WoE prácticamente sin
-reescalar — señal de que el binning captó bien la relación.
+reescalar: señal de que el binning captó bien la relación.
 
 ### 2.4.3 Estimación: máxima verosimilitud
 
@@ -298,7 +298,7 @@ positiva, **la log-loss es convexa** y el óptimo es global **[TEORÍA]**.
 
 **[IMPL]** scikit-learn usa el algoritmo L-BFGS (cuasi-Newton con memoria
 limitada). Converge en decenas de iteraciones frente a un máximo de 2,000
-**[MEDIDO]** — muy holgado, lo que confirma un problema bien condicionado.
+**[MEDIDO]**: muy holgado, lo que confirma un problema bien condicionado.
 
 ### 2.4.4 Regularización
 
@@ -320,7 +320,7 @@ penalización.
 | 10.0 | 0.86014 | 0.843 |
 | 100.0 | 0.86014 | 0.843 |
 
-La mejor configuración supera a la usada en $6.3\times10^{-4}$ — dentro del ruido
+La mejor configuración supera a la usada en $6.3\times10^{-4}$: dentro del ruido
 de muestreo, que es de $\pm 0.0036$ (§2.12.1).
 
 **Por qué no importa [TEORÍA]:** con $n = 120{,}000$ y $p = 10$, hay **12,000
@@ -341,7 +341,7 @@ mientras arrastran un código centinela que invierte la señal.
 
 **[TEORÍA]** Si dos predictores son casi combinación lineal uno del otro, la
 matriz $\mathbf{X}^\top\mathbf{W}\mathbf{X}$ se vuelve casi singular. Su inversa
-—que da la matriz de covarianzas de $\hat{\boldsymbol{\beta}}$— tiene entradas
+(que da la matriz de covarianzas de $\hat{\boldsymbol{\beta}}$) tiene entradas
 enormes: los coeficientes se vuelven inestables y pueden invertir de signo.
 
 **Ejemplo canónico:** predecir el peso usando `altura_cm` y `altura_pulgadas`.
@@ -439,7 +439,7 @@ hoja. Es un control de complejidad mucho más fuerte de lo que sugiere el númer
 **[TEORÍA]** (Ke et al., 2017) La diferencia estructural:
 
 ```
-XGBoost — crecimiento por NIVELES     LightGBM — crecimiento por HOJAS
+XGBoost - crecimiento por NIVELES     LightGBM - crecimiento por HOJAS
           o                                     o
         /   \                                 /   \
        o     o   ← nivel completo             o     o
@@ -492,8 +492,8 @@ del trivial, detectando apenas el 20.1% de los eventos.
 
 |  | Predice $\hat Y=0$ | Predice $\hat Y=1$ |
 |---|---|---|
-| **Real $Y=0$** | VN — se presta a un buen cliente | **FP** — se rechaza a un buen cliente |
-| **Real $Y=1$** | **FN** — se presta a un moroso | VP — se detecta al moroso |
+| **Real $Y=0$** | VN: se presta a un buen cliente | **FP**: se rechaza a un buen cliente |
+| **Real $Y=1$** | **FN**: se presta a un moroso | VP: se detecta al moroso |
 
 $$\text{Precision} = \frac{\text{VP}}{\text{VP}+\text{FP}}, \qquad
 \text{Recall} = \text{TPR} = \frac{\text{VP}}{\text{VP}+\text{FN}}, \qquad
@@ -518,7 +518,7 @@ las veces.
 
 **Propiedad clave:** el AUC es independiente del umbral, lo que lo hace apto
 para comparar modelos. **Limitación:** también es independiente de la
-calibración — dos modelos con AUC idéntico pueden tener probabilidades muy
+calibración: dos modelos con AUC idéntico pueden tener probabilidades muy
 distintas.
 
 ### 2.7.4 Gini
@@ -639,7 +639,7 @@ Ejemplo con XGBoost (`experiments/shap_xgboost/`); `06` verifica lo mismo para
 LightGBM, el modelo elegido.
 
 ```
-Cliente #22556 — XGBoost, PD 86.6%
+Cliente #22556 - XGBoost, PD 86.6%
   base (log-odds medio de la población)          -2.6593
   RevolvingUtilization = 1.07                    +1.0746
   total_atrasos = 9                              +0.8664
@@ -694,7 +694,7 @@ $$(1-p)M > pL \;\Longleftrightarrow\; M > p(M+L) \;\Longleftrightarrow\;
 **El umbral no es una elección estadística: lo dicta la economía.**
 
 **[MEDIDO]** Con $M = \$800$ y $L = \$6{,}000$: $p^\ast = 800/6800 = 0.1176$.
-El óptimo hallado por barrido empírico cayó en 0.1105 — la fórmula predice el
+El óptimo hallado por barrido empírico cayó en 0.1105: la fórmula predice el
 punto de corte sin necesidad de buscarlo.
 
 ### 2.10.2 Validación de que la fórmula generaliza [MEDIDO]
@@ -710,7 +710,7 @@ sobreajustar. Partiendo validación en dos mitades:
 
 El umbral ajustado no mejora de forma consistente a la fórmula (gana esta en 2
 de 3 modelos). Con una sola partición no se puede afirmar más; la fórmula se
-prefiere porque no depende de la muestra. Detalle en [E12](05_experimentos.md#e12--debe-buscarse-el-umbral-en-los-datos).
+prefiere porque no depende de la muestra. Detalle en [E12](05_experimentos.md#e12-debe-buscarse-el-umbral-en-los-datos).
 
 ### 2.10.3 Relación con la teoría de decisión bayesiana
 
@@ -826,7 +826,7 @@ optimismo.
 Diferencia +0.00018, IC 95 % (Nadeau–Bengio) [-0.00084, +0.00120]. **No se
 detecta optimismo**; el IC lo acota por debajo de ~0.001 de AUC. La
 configuración elegida cambia entre folds: el AUC es casi plano en la rejilla.
-Detalle en [E11](05_experimentos.md#e11--validación-cruzada-anidada).
+Detalle en [E11](05_experimentos.md#e11-validación-cruzada-anidada).
 
 ---
 

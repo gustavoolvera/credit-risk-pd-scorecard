@@ -1,7 +1,7 @@
 # Ablación de variables del modelo H
 
 Experimento aislado (2026-11-01). Documentado en
-[docs/05_experimentos.md — E17](../../docs/05_experimentos.md#e17--ablación-de-variables-del-modelo-h).
+[docs/05_experimentos.md: E17](../../docs/05_experimentos.md#e17-ablación-de-variables-del-modelo-h).
 
 **Decisión: se mantiene H (10 variables).** Nada de esta carpeta modifica el
 pipeline: los scripts solo escriben en `resultados/`.

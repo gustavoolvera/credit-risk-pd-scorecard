@@ -1,4 +1,4 @@
-# 04 — Modelado: los tres estimadores y sus hiperparámetros
+# 04: Modelado: los tres estimadores y sus hiperparámetros
 
 [← Pipeline de datos](03_pipeline_datos.md) · [Índice](README.md) · [Siguiente: Experimentos →](05_experimentos.md)
 
@@ -38,7 +38,7 @@ faltantes informativos (5.57% vs 6.96%), imputar destruye señal.
 
 ---
 
-## 4.2 Modelo 1 — Regresión logística sobre WoE
+## 4.2 Modelo 1: Regresión logística sobre WoE
 
 **Script:** `03_train_logistic.py` (~540 líneas, 9 pasos)
 
@@ -57,9 +57,9 @@ Se comparan **ocho** subconjuntos, entrenando en 96,000 filas y evaluando en las
 
 **[MEDIDO]**
 
-Con la comprobación **completa** de coherencia —variables WoE contra la
+Con la comprobación **completa** de coherencia (variables WoE contra la
 convención de signo **e indicadores contra su dirección univariada medida en los
-datos** (ver [H1](07_auditoria.md#h1)):
+datos**, ver [H1](07_auditoria.md#h1)):
 
 | Subconjunto | n vars | AUC ajuste | AUC selección | VIF máx | Incoherentes |
 |---|---|---|---|---|---|
@@ -80,7 +80,7 @@ colinealidad en lugar de eliminarla.
 
 **¿Sobra alguna de las 10?** La dirección opuesta (quitar variables de H) se
 evaluó con una ablación en CV 5×5 con WoE por partición, réplica confirmatoria y
-pruebas de no inferioridad ([05 E17](05_experimentos.md#e17--ablación-de-variables-del-modelo-h)).
+pruebas de no inferioridad ([05 E17](05_experimentos.md#e17-ablación-de-variables-del-modelo-h)).
 Quitar `NumberRealEstateLoansOrLines` empeora el modelo de forma significativa.
 Quitar `MonthlyIncome` y `NumberOfOpenCreditLinesAndLoans` da un modelo de 8
 variables equivalente, pero no mejor. **Se mantiene H.**
@@ -98,13 +98,13 @@ mejor = validos.sort_values(["AUC_seleccion", "VIF_max"],
 **Justificación [RECOM]:** un coeficiente que contradice la evidencia univariada
 no es un detalle estético. Afirma literalmente "más episodios de mora → menos
 riesgo", o le da puntos a favor al grupo con 54.67% de eventos. Ante un
-supervisor —o ante el cliente rechazado— es indefendible.
+supervisor (o ante el cliente rechazado) es indefendible.
 
 **Coste de la restricción [MEDIDO]:** +0.00386 de AUC de selección (0.45%). El
 mejor AUC absoluto lo daba un subconjunto con 8 coeficientes incoherentes.
 
 **Principio subyacente [RECOM]:** en un scorecard WoE la codificación de las
-variables originales **ya lo contiene todo** — los faltantes (bin `FALTANTE`),
+variables originales **ya lo contiene todo**: los faltantes (bin `FALTANTE`),
 los extremos (bins de los bordes) y la no-linealidad (el propio binning). Añadir
 indicadores de calidad o variables derivadas solo puede introducir redundancia.
 
@@ -170,13 +170,13 @@ correcta es $\beta_j\,\sigma(\text{WoE}_j)$ y la permutation importance, en
 
 **Lectura honesta [RECOM]:** la corrección **empeora** las cuatro métricas de
 rendimiento. Se acepta porque un scorecard cuya tabla de puntos contradice la
-evidencia no sirve para su único propósito —explicar decisiones— por muy alto que
+evidencia no sirve para su único propósito (explicar decisiones) por muy alto que
 sea su AUC. La contrapartida es un VIF de 1.3: los predictores son
 prácticamente ortogonales y los coeficientes, estables.
 
 ---
 
-## 4.3 Modelo 2 — XGBoost
+## 4.3 Modelo 2: XGBoost
 
 **Script:** `04_train_xgboost.py` (442 líneas, 10 pasos)
 
@@ -215,7 +215,7 @@ Con parámetros por defecto:
 Brecha de **7.3 puntos**. Es el error más común al usar XGBoost: sin control de
 complejidad sigue construyendo árboles hasta memorizar el ruido.
 
-Tras el ajuste: `0.87651 / 0.86854` — brecha de 0.8 puntos y +0.013 de AUC.
+Tras el ajuste: `0.87651 / 0.86854`: brecha de 0.8 puntos y +0.013 de AUC.
 
 ### 4.3.4 Rejilla de hiperparámetros [MEDIDO]
 
@@ -228,7 +228,7 @@ Tras el ajuste: `0.87651 / 0.86854` — brecha de 0.8 puntos y +0.013 de AUC.
 | 7 | 20 | 0.8 | 0.6 | 1 | 44 | 0.86591 |
 | 6 | 10 | 0.8 | 0.8 | 5 | 91 | 0.86572 |
 
-**La selección se hace por `auc_es`, no por `auc_val`** — elegir por validación
+**La selección se hace por `auc_es`, no por `auc_val`**: elegir por validación
 la convertiría en parte de la decisión.
 
 ### 4.3.5 Significado de cada hiperparámetro
@@ -259,7 +259,7 @@ Descartado: no mejora la discriminación y destruye la calibración.
 
 ---
 
-## 4.4 Modelo 3 — LightGBM
+## 4.4 Modelo 3: LightGBM
 
 **Script:** `05_train_lightgbm.py` (421 líneas, 8 pasos)
 
@@ -309,7 +309,7 @@ complejidad se dispara rápido: `num_leaves=127` degrada el AUC en 0.003 y el
 | `reg_lambda` | `reg_lambda` | Idéntico |
 
 **[IMPL]** Se fija `bagging_freq=1`; sin él, `bagging_fraction` se ignora
-silenciosamente — un error frecuente al migrar configuraciones.
+silenciosamente: un error frecuente al migrar configuraciones.
 
 ---
 
@@ -342,8 +342,8 @@ ignoró.
 número de árboles), el modelo final se reentrena con las **150,000** filas
 etiquetadas.
 
-**Justificación [TEORÍA]:** apartar validación tenía un propósito —permitir
-medir sin engañarse— que ya se cumplió. Esos 30,000 registros etiquetados son
+**Justificación [TEORÍA]:** apartar validación tenía un propósito (permitir
+medir sin engañarse) que ya se cumplió. Esos 30,000 registros etiquetados son
 información utilizable. Lo que **no** puede hacerse es volver a mirarlos para
 decidir algo.
 
@@ -352,8 +352,8 @@ decidir algo.
 desactiva `early_stopping_rounds`.
 
 **Comprobación de cordura [MEDIDO]:** el AUC in-sample sobre las filas que antes
-eran validación sube a 0.87860. **No es una estimación de rendimiento** —esas
-filas ahora forman parte del entrenamiento— sino una verificación de que el
+eran validación sube a 0.87860. **No es una estimación de rendimiento** (esas
+filas ahora forman parte del entrenamiento) sino una verificación de que el
 reajuste funcionó.
 
 ---
@@ -438,7 +438,7 @@ entrenamiento de distintos folds comparten el 75 % de sus filas.
 - **XGBoost frente a LightGBM: no se detecta diferencia, y eso no demuestra que
   sean equivalentes.** El IC es compatible con diferencias de hasta ±0.0013 en
   cualquier sentido. Afirmar equivalencia exigiría un margen fijado de antemano
-  y una prueba de equivalencia (como en [E17](05_experimentos.md#e17--ablación-de-variables-del-modelo-h)).
+  y una prueba de equivalencia (como en [E17](05_experimentos.md#e17-ablación-de-variables-del-modelo-h)).
 - **Limitaciones.** Con 5 folds, $s_d^2$ se estima con 4 grados de libertad y el
   test tiene poca potencia. La corrección de Nadeau–Bengio es una aproximación:
   supone una correlación entre folds de $n_{\text{test}}/(n_{\text{train}}+n_{\text{test}})$.
@@ -743,7 +743,7 @@ Tolerancias fijadas **antes** de ejecutar los scripts:
 | max \|Δβ\| | 1e-4 (respaldo), 1e-5 (referencia) | ❌ 9.9e-3 | ✅ 3.9e-6 |
 | max \|ΔPD\| individual | 1e-4 (respaldo), 1e-5 (referencia) | ❌ 7.0e-3 en train, 5.4e-3 en val (media 2.4e-4) | ✅ 1.3e-6 (media 6e-8) |
 | Error de calibración | ≤ 0.005 pp | ❌ +0.016 pp | ✅ 0 |
-| Intercepto vs valor teórico | 1e-5 | — | ✅ 1e-7 |
+| Intercepto vs valor teórico | 1e-5 | n/a | ✅ 1e-7 |
 
 **Las diferencias frente al respaldo superan los umbrales originales.** Se
 aceptaron de forma explícita (decisión del 2026-11-01) porque:

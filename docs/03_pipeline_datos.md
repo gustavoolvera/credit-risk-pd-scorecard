@@ -1,4 +1,4 @@
-# 03 — Pipeline de datos: limpieza, ingeniería y codificación
+# 03: Pipeline de datos: limpieza, ingeniería y codificación
 
 [← Fundamentos](02_fundamentos_matematicos.md) · [Índice](README.md) · [Siguiente: Modelado →](04_modelado.md)
 
@@ -40,20 +40,20 @@ edad 45 / ingreso $9,120 frente a edad 43 / ingreso $5,700.
 
 **Todas las cifras de este capítulo proceden de las 120,000 filas de
 entrenamiento, no de las 150,000 del fichero.** `01_eda.py` ejecuta el split
-—misma semilla y mismo `stratify` que `02_preprocessing.py`— *antes* de calcular
+(misma semilla y mismo `stratify` que `02_preprocessing.py`) *antes* de calcular
 cualquier estadístico. Las 30,000 filas de validación no se inspeccionan en
 ningún punto del análisis.
 
 El motivo no es que el EDA ajuste parámetros: no ajusta ninguno. Es que el EDA es
-**donde se toman las decisiones** —qué códigos son centinela, dónde cortar una
-cola, qué indicadores crear— y varias de esas decisiones se apoyan en vistas que
+**donde se toman las decisiones** (qué códigos son centinela, dónde cortar una
+cola, qué indicadores crear) y varias de esas decisiones se apoyan en vistas que
 involucran el objetivo (tasa de evento por decil, por patrón de faltantes). Si
 esas vistas incluyeran las filas de validación, dichas filas habrían participado
 en el diseño del modelo y dejarían de ser un juez independiente. La contaminación
 no entra por un `.fit()`; entra por el analista.
 
 Consecuencia práctica: los conteos de este capítulo son ~80% de los del fichero
-completo. Las tasas y las conclusiones son estables — ningún umbral cambió al
+completo. Las tasas y las conclusiones son estables: ningún umbral cambió al
 recalcularlos sobre la partición de entrenamiento.
 
 ### 3.1.3 Balance del objetivo [MEDIDO]
@@ -100,7 +100,7 @@ en tres categorías distintas: es un código de sistema.
 
 **214 filas (0.18% de la muestra) inflaron la correlación de ~0.27 a ~0.99.**
 Sin investigar, la conclusión habría sido "las tres variables son redundantes,
-elimino dos" — destruyendo información valiosa.
+elimino dos", destruyendo información valiosa.
 
 **Lección [RECOM]:** ningún estadístico agregado debe interpretarse antes de
 revisar los outliers.
@@ -108,8 +108,8 @@ revisar los outliers.
 ### 3.2.2 `RevolvingUtilizationOfUnsecuredLines > 100`
 
 Ver la tabla completa en [§1.4.1.1](01_arquitectura.md). Resumen: entre 1 y 100
-el riesgo es de **39.67%** (n=2,468) —sobregiros legítimos, el grupo más
-predictivo del conjunto—; por encima de 100 se desploma a **3.03%** en la banda
+el riesgo es de **39.67%** (n=2,468) (sobregiros legítimos, el grupo más
+predictivo del conjunto); por encima de 100 se desploma a **3.03%** en la banda
 100–1,000 (n=33) y vuelve a **7.19%** por encima de 1,000 (n=139), es decir
 **indistinguible de la media global de 6.68%**. Deja de comportarse como deuda.
 
@@ -134,7 +134,7 @@ verifica en cuatro pasos (`01_eda.py`, sección 5e).
 Dos picos aislados sobre casi nada. **No existe ningún valor fraccionario**: no
 hay una escala de ingresos bajos, hay dos códigos.
 
-#### (2) Prueba del denominador — la evidencia decisiva
+#### (2) Prueba del denominador: la evidencia decisiva
 
 $\text{DebtRatio} = \text{deuda mensual} / \text{ingreso mensual}$. Si el sistema
 de origen carecía de ingreso no pudo dividir, y lo esperable es que almacenara el
@@ -146,7 +146,7 @@ ingreso normal, reconstruida como $\text{DebtRatio} \times \text{MonthlyIncome}$
 | `MonthlyIncome = 0` | 101 | 914 | 2,150 | 92.9% |
 | `MonthlyIncome = 1` | 104 | 562 | 1,324 | 91.4% |
 | `MonthlyIncome` faltante | 123 | 1,163 | 2,384 | 93.3% |
-| **deuda real** (ingreso > 100) | 639 | 1,657 | 2,901 | — |
+| **deuda real** (ingreso > 100) | 639 | 1,657 | 2,901 | n/a |
 | *un ratio auténtico* | ~0.1 | ~0.3 | ~0.5 | **1.0%** |
 
 Los tres grupos sospechosos tienen `DebtRatio` en el orden de **cientos o miles
@@ -236,7 +236,7 @@ p95:  2,441.00
 almacenó el numerador (deuda mensual bruta) en lugar del ratio.
 
 De las 5,787 restantes que sí tienen ingreso, **1,691 tienen
-`MonthlyIncome ≤ 1`** — mismo problema por otra vía.
+`MonthlyIncome ≤ 1`**: mismo problema por otra vía.
 
 ### 3.3.1 Régimen válido [MEDIDO]
 
@@ -278,8 +278,8 @@ encima de la media**:
 Las 1,732 de la otra zona son inocuas: el 82.4% tiene `DebtRatio` exactamente 0,
 que vale lo mismo interpretado como ratio o como importe.
 
-**Tratamiento [IMPL]:** se separa en dos columnas complementarias —
-`DebtRatio_limpio` donde existía denominador, `deuda_bruta_proxy` donde no— en lugar
+**Tratamiento [IMPL]:** se separa en dos columnas complementarias
+(`DebtRatio_limpio` donde existía denominador, `deuda_bruta_proxy` donde no) en lugar
 de capear:
 
 ```python
@@ -290,7 +290,7 @@ df["DebtRatio_limpio"] = df["DebtRatio"].where(~sin_denominador, np.nan)
 
 **`flag_debtratio_invalido` fue eliminado.** Bajo esta regla equivaldría
 exactamente a `flag_income_faltante | flag_income_cero`: una combinación lineal
-de columnas existentes, es decir colinealidad perfecta — el mecanismo que
+de columnas existentes, es decir colinealidad perfecta: el mecanismo que
 produjo [H1](07_auditoria.md#h1).
 
 ### 3.3.3 ¿Se comporta igual con y sin denominador? [MEDIDO]
@@ -312,7 +312,7 @@ denominador (10.00) ya supera el percentil 99 del grupo con denominador (2.01):
 | máx | 450 | 329,664 |
 
 **El gradiente de riesgo es la prueba decisiva.** Se mide con la correlación de
-Spearman entre el índice de decil y la tasa de evento — solo mira el orden, por
+Spearman entre el índice de decil y la tasa de evento: solo mira el orden, por
 lo que es inmune al cambio de unidad:
 
 | Grupo | n | Rango de tasas por decil | Spearman | $p$ |
@@ -322,7 +322,7 @@ lo que es inmune al cambio de unidad:
 
 Con denominador, `DebtRatio` ordena el riesgo de forma creciente en su mitad
 superior: es apalancamiento y se comporta como tal. Sin denominador, el importe
-**no ordena nada** — la tasa rebota sin dirección y el decil más alto (hasta
+**no ordena nada**: la tasa rebota sin dirección y el decil más alto (hasta
 \$329,664 de deuda mensual) vuelve prácticamente a la media global.
 
 **Confirmación independiente:** el Information Value de `deuda_bruta_proxy` es
@@ -332,7 +332,7 @@ Es la última variable del ranking de las 17.
 **Consecuencia [IMPL]:** son dos variables distintas compartiendo columna.
 Mezclarlas obligaría al modelo a aprender una relación monótona que solo existe
 en una de las dos poblaciones. `deuda_bruta_proxy` se conserva en la rama de árboles
-—no estorba y documenta la separación— pero no aporta señal; el modelo logístico
+(no estorba y documenta la separación) pero no aporta señal; el modelo logístico
 no la usa.
 
 ---
@@ -350,7 +350,7 @@ no la usa.
 tampoco tiene `MonthlyIncome`. No es ausencia variable por variable: son
 **registros incompletos** procedentes de un canal o sistema distinto.
 
-### 3.4.2 El faltante es informativo — y en dirección contraintuitiva [MEDIDO]
+### 3.4.2 El faltante es informativo, y en dirección contraintuitiva [MEDIDO]
 
 | Grupo | n | Tasa de evento |
 |---|---|---|
@@ -426,7 +426,7 @@ credit scoring es el análisis por bins, no la correlación.
 
 1. **El salto 0→1 difiere radicalmente entre gravedades.** En mora leve el riesgo
    se multiplica por 3.8; en mora grave por **7.3**. Las tres variables aportan
-   información **distinta**, no redundante — lo que justifica conservarlas.
+   información **distinta**, no redundante: lo que justifica conservarlas.
 2. **La relación satura.** A partir de 4–5 episodios la tasa se estanca en
    50%–65% con celdas de muy poca masa. Esto motiva agrupar el extremo superior
    en lugar de tratar el conteo como variable continua.
@@ -448,8 +448,8 @@ que un analista de riesgo formularía; ninguna es una combinación arbitraria.
 | XGBoost (AUC early-stop) | 0.86350 | 0.86405 | **+0.00055** |
 
 *(Medición del momento en que se tomó la decisión; el modelo lineal de referencia
-tenía entonces 18 variables. La auditoría posterior lo redujo a 10 — ver
-[E16](05_experimentos.md#e16--corrección-de-h1-coherencia-completa-de-signos).)*
+tenía entonces 18 variables. La auditoría posterior lo redujo a 10, ver
+[E16](05_experimentos.md#e16-corrección-de-h1-coherencia-completa-de-signos).)*
 
 En la rama lineal, además, **causaban 4 coeficientes con signo invertido**. En la
 rama de árboles no rompían nada pero tampoco mejoraban.
@@ -516,7 +516,7 @@ y no del reparto.
 
 ## 3.8 Diseño de los bins WoE
 
-### 3.8.1 Variables de conteo — cortes manuales
+### 3.8.1 Variables de conteo: cortes manuales
 
 ```python
 BINS_CONTEO = {
@@ -533,10 +533,10 @@ repetidos. Con 94.4% de ceros en `NumberOfTimes90DaysLate`, no existen 10 cortes
 distintos posibles y la función colapsa a un único bin. Es exactamente lo que
 ocurrió en la primera versión del EDA.
 
-**Estructura elegida:** $\{0\},\ \{1\},\ \{2,3\},\ \{4+\}$ — captura el salto
+**Estructura elegida:** $\{0\},\ \{1\},\ \{2,3\},\ \{4+\}$: captura el salto
 0→1 (el mayor) como bin propio, y agrupa la cola donde la relación satura.
 
-### 3.8.2 Variables continuas — cortes derivados del análisis
+### 3.8.2 Variables continuas: cortes derivados del análisis
 
 ```python
 "RevolvingUtilizationOfUnsecuredLines": [-0.1, 0.1, 0.3, 0.5, 0.7, 0.9, 1.0, np.inf],
@@ -547,7 +547,7 @@ ocurrió en la primera versión del EDA.
 
 Los cortes se sitúan **donde cambia el riesgo**, no en percentiles regulares. Por
 ejemplo, `RevolvingUtilization` tiene un corte explícito en 0.9 y otro en 1.0
-porque ahí está el *mass point* de 11,778 personas al 98%–100% de su límite —un
+porque ahí está el *mass point* de 11,778 personas al 98%–100% de su límite: un
 grupo real, generado por el techo que impone el banco, con 19.31% de evento.
 
 ### 3.8.3 Tabla WoE resultante para la variable más predictiva [MEDIDO]

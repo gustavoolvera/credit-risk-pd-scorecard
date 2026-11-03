@@ -1,4 +1,4 @@
-# 07 — Revisión técnica interna
+# 07: Revisión técnica interna
 
 [← Negocio y regulación](06_negocio_y_regulacion.md) · [Índice](README.md) · [Siguiente: Comparación metodológica →](08_comparacion_metodologica.md)
 
@@ -35,7 +35,7 @@ código y contra ejecuciones desde cero.
 
 Antes de los hallazgos, lo verificado como correcto.
 
-### V1 — Reproducibilidad exacta ✅
+### V1: Reproducibilidad exacta ✅
 
 Eliminados `datasets/`, `artifacts/`, `outputs/` y cachés, y reconstruido:
 
@@ -46,7 +46,7 @@ Submissions          : 101,503/101,503 predicciones idénticas
 Artefactos esperados : 17/17 generados
 ```
 
-### V2 — Ausencia de fuga de datos en los datos ✅
+### V2: Ausencia de fuga de datos en los datos ✅
 
 ```
 Correlación máxima con el objetivo : 0.3916 (total_atrasos)
@@ -56,7 +56,7 @@ Valores 96/98 residuales           : 0
 
 Umbral de alarma convencional: correlación > 0.9. No se alcanza.
 
-### V3 — Ausencia de fuga en el proceso ✅
+### V3: Ausencia de fuga en el proceso ✅
 
 Auditados los criterios de selección de los tres scripts de entrenamiento:
 
@@ -71,10 +71,10 @@ anterior. Fue corregido. La versión actual no lo hace.
 
 **Límite de esta verificación:** V2 y V3 examinan los datos y los criterios de
 selección automáticos. No examinan el **ámbito del análisis exploratorio**, que
-es un canal distinto —las decisiones del analista— y por el que sí había
+es un canal distinto (las decisiones del analista) y por el que sí había
 contaminación. Ver [H13](#h13).
 
-### V4 — El AUC reportado no está inflado ✅
+### V4: El AUC reportado no está inflado ✅
 
 Validación cruzada anidada (rejilla completa dentro de cada fold;
 `experiments/cv_anidada/`):
@@ -89,22 +89,22 @@ Diferencia +0.00018, IC 95 % [-0.00084, +0.00120]: no se detecta optimismo.
 *Corrección (2026-11-03):* esta sección citaba 0.86661 ± 0.00337 sin un script
 que lo respaldara; las cifras actuales provienen de un script versionado.
 
-### V5 — Determinismo ✅
+### V5: Determinismo ✅
 
 Entrenamientos repetidos con la misma semilla producen coeficientes y
 predicciones idénticos (`np.array_equal` → `True`).
 
-### V6 — Corrección matemática del scorecard ✅
+### V6: Corrección matemática del scorecard ✅
 
 $$\max_i \left| \text{Score}_i^{\text{suma de puntos}} - \text{Score}_i^{\text{transformación de PD}} \right| = 0.0000000000$$
 
-### V7 — Aditividad de SHAP ✅
+### V7: Aditividad de SHAP ✅
 
 $$\phi_0 + \sum_i \phi_i = -2.6593 + 4.5252 = +1.8659 \;\Rightarrow\; \sigma(1.8659) = 86.6\% = \hat p_{\text{modelo}}$$
 
 (XGBoost, cliente #22556; `experiments/shap_xgboost/`.)
 
-### V8 — Integridad de artefactos ✅
+### V8: Integridad de artefactos ✅
 
 Los 5 umbrales congelados coinciden con el código actual; el artefacto recargado
 reproduce la transformación; `preprocessor_final.joblib` declara correctamente
@@ -114,7 +114,7 @@ reproduce la transformación; `preprocessor_final.joblib` declara correctamente
 
 ## 7.2 Hallazgos
 
-### <a name="h1"></a>H1 ✅ — El scorecard atribuía puntos en dirección contraria al riesgo (CORREGIDO)
+### <a name="h1"></a>H1 ✅: El scorecard atribuía puntos en dirección contraria al riesgo (CORREGIDO)
 
 > **Estado: cerrado.** Lo que sigue documenta el defecto tal como se detectó, su
 > causa, la corrección aplicada y su coste medido. Se conserva completo porque el
@@ -139,7 +139,7 @@ positivos** en el scorecard.
 
 El scorecard existe para explicar decisiones. Si un supervisor pregunta por qué
 se rechazó a un cliente y la tabla indica que "registro inválido" le **sumó**
-puntos, la explicación es indefendible — pese a que el modelo, en conjunto,
+puntos, la explicación es indefendible, pese a que el modelo, en conjunto,
 predice correctamente.
 
 **Distinción crítica:** la **predicción agregada es correcta**; lo incorrecto es
@@ -263,7 +263,7 @@ comprobación anterior.
 
 ---
 
-### <a name="h2"></a>H2 🔴 — Ausencia de validación *out-of-time*
+### <a name="h2"></a>H2 🔴: Ausencia de validación *out-of-time*
 
 #### 1. Qué está mal
 
@@ -307,7 +307,7 @@ que sea el AUC in-sample.
 
 ---
 
-### <a name="h3"></a>H3 🔴 — Sin marco de monitoreo ni backtesting
+### <a name="h3"></a>H3 🔴: Sin marco de monitoreo ni backtesting
 
 #### 1. Qué está mal
 
@@ -348,7 +348,7 @@ Sin monitoreo, la degradación se detecta cuando ya ha generado pérdidas.
 
 ---
 
-### <a name="h4"></a>H4 ✅ — La comprobación de signos tenía un punto ciego (CORREGIDO)
+### <a name="h4"></a>H4 ✅: La comprobación de signos tenía un punto ciego (CORREGIDO)
 
 `signos_invertidos()` eximía a los indicadores, lo que ocultó los tres defectos
 de H1.
@@ -358,14 +358,14 @@ de H1.
 `woe_` contra la convención de signo **e indicadores contra su dirección
 univariada medida en los datos**.
 
-`signos_invertidos()` se conserva —sus pruebas documentan la convención WoE— pero
+`signos_invertidos()` se conserva (sus pruebas documentan la convención WoE) pero
 `03_train_logistic.py` ya no la usa como criterio.
 
 **Estado:** ✅ **CORREGIDO.** 6 pruebas nuevas; total 48.
 
 ---
 
-### <a name="h5"></a>H5 🟡 — Suavizado WoE no canónico
+### <a name="h5"></a>H5 🟡: Suavizado WoE no canónico
 
 #### Qué está mal
 
@@ -397,7 +397,7 @@ byte a byte sin beneficio material).
 
 ---
 
-### <a name="h6"></a>H6 🟠 — Binning manual, no reproducible por un tercero
+### <a name="h6"></a>H6 🟠: Binning manual, no reproducible por un tercero
 
 #### Qué está mal
 
@@ -415,8 +415,8 @@ procedimiento documentado, no por criterio individual.
 Contrastar contra un binning monótono automático (`optbinning`, árbol de
 decisión con restricción de monotonía, o ChiMerge) y documentar la diferencia.
 
-**Impacto esperado [RECOM]:** probablemente pequeño en AUC —los cortes manuales
-siguen la evidencia empírica— pero convierte una decisión subjetiva en un
+**Impacto esperado [RECOM]:** probablemente pequeño en AUC (los cortes manuales
+siguen la evidencia empírica) pero convierte una decisión subjetiva en un
 procedimiento auditable.
 
 **Estado:** no corregido. Ver [capítulo 08](08_comparacion_metodologica.md) para
@@ -424,7 +424,7 @@ la comparación de métodos.
 
 ---
 
-### <a name="h7"></a>H7 🟡 — Los scripts de modelado carecen de pruebas unitarias
+### <a name="h7"></a>H7 🟡: Los scripts de modelado carecen de pruebas unitarias
 
 Las 42 pruebas cubren `src/`. Los scripts `01`–`08` y `predict.py` no tienen
 pruebas propias.
@@ -440,10 +440,10 @@ muestra reducida y verifiquen los artefactos de salida.
 
 ---
 
-### <a name="h8"></a>H8 🟡 — Siete registros con edad > 100 años
+### <a name="h8"></a>H8 🟡: Siete registros con edad > 100 años
 
 `EDAD_MINIMA = 18` filtra por abajo; no hay filtro superior. Quedan 7 registros
-con edad entre 101 y 109, con tasa de evento del 14.29% (1 de 7 — ruido).
+con edad entre 101 y 109, con tasa de evento del 14.29% (1 de 7: ruido).
 
 **Valoración:** una edad de 103 años no es imposible. Su comportamiento es
 coherente con el resto (no presenta la inversión característica de los códigos de
@@ -453,7 +453,7 @@ sistema).
 
 ---
 
-### <a name="h9"></a>H9 🟠 — LGD y EAD tratados como constantes
+### <a name="h9"></a>H9 🟠: LGD y EAD tratados como constantes
 
 El cálculo económico asume $\text{LGD} = 0.60$ y $\text{EAD} = \$10{,}000$
 uniformes.
@@ -469,7 +469,7 @@ de ECL auditada.
 
 ---
 
-### <a name="h10"></a>H10 🟠 — Reject inference no abordado
+### <a name="h10"></a>H10 🟠: Reject inference no abordado
 
 Ver [§6.7.3](06_negocio_y_regulacion.md#673-reject-inference).
 
@@ -477,7 +477,7 @@ Ver [§6.7.3](06_negocio_y_regulacion.md#673-reject-inference).
 
 ---
 
-### <a name="h11"></a>H11 🟡 — Código muerto (corregido durante esta auditoría)
+### <a name="h11"></a>H11 🟡: Código muerto (corregido durante esta auditoría)
 
 Detección estática reveló en `06_evaluation.py`:
 
@@ -493,18 +493,18 @@ defecto.
 
 ---
 
-### <a name="h12"></a>H12 ⚪ — El objetivo es un proxy del default regulatorio
+### <a name="h12"></a>H12 ⚪: El objetivo es un proxy del default regulatorio
 
 `SeriousDlqin2yrs` implementa el criterio de 90+ días de Basilea, pero **no** el
 de *unlikeliness to pay*. Además su horizonte (24 meses) difiere del horizonte de
 12 meses de la PD de capital.
 
-**No es un defecto del proyecto** —es la definición del conjunto de datos— pero
+**No es un defecto del proyecto** (es la definición del conjunto de datos) pero
 debe declararse en cualquier uso regulatorio.
 
 ---
 
-### <a name="h13"></a>H13 ✅ — El EDA se ejecutaba sobre el fichero completo (CORREGIDO)
+### <a name="h13"></a>H13 ✅: El EDA se ejecutaba sobre el fichero completo (CORREGIDO)
 
 **Detectado por el autor del proyecto, no por esta auditoría.** El punto V2/V3
 verificaba la ausencia de fuga en los datos y en los criterios de selección, pero
@@ -516,9 +516,9 @@ no examinó el ámbito del análisis exploratorio.
 todos los diagnósticos, incluidos los que involucran el objetivo: tasa de evento
 por decil, por patrón de faltantes, y por banda de las variables recortadas.
 
-Las decisiones de diseño derivadas de ese análisis —`SENTINELAS`,
+Las decisiones de diseño derivadas de ese análisis (`SENTINELAS`,
 `REVUTIL_UMBRAL_INVALIDO`, `DEBTRATIO_UMBRAL_INVALIDO`
-(hoy sustituido, ver [H14](#h14)), `INGRESO_MINIMO_PLAUSIBLE`, y la creación de los indicadores de faltante— se
+(hoy sustituido, ver [H14](#h14)), `INGRESO_MINIMO_PLAUSIBLE`, y la creación de los indicadores de faltante) se
 tomaron, por tanto, viendo también las 30,000 filas reservadas para validación.
 
 #### 2. Por qué estaba mal
@@ -564,7 +564,7 @@ actualizadas a la partición de entrenamiento.
 
 ---
 
-### <a name="h14"></a>H14 ✅ — `DebtRatio` se separaba por magnitud, no por causa (CORREGIDO)
+### <a name="h14"></a>H14 ✅: `DebtRatio` se separaba por magnitud, no por causa (CORREGIDO)
 
 **Detectado por el autor del proyecto** al exigir evidencia propia para el
 tratamiento de `MonthlyIncome ≤ 1`.
@@ -593,7 +593,7 @@ sin_denominador = (df["flag_income_faltante"] | df["flag_income_cero"]).astype(b
 ```
 
 `flag_debtratio_invalido` **se elimina**: bajo la regla nueva sería idéntico a
-la unión de los dos indicadores de ingreso — colinealidad perfecta, el mismo
+la unión de los dos indicadores de ingreso: colinealidad perfecta, el mismo
 mecanismo de [H1](#h1). Las características bajan de 25 a 24.
 
 #### 4. Impacto medido [MEDIDO]
@@ -644,7 +644,7 @@ redundancia estructural de la familia que ya causó H1.
 
 | Prioridad | Acción | Esfuerzo | Bloquea despliegue |
 |---|---|---|---|
-| ~~1~~ | ~~Retirar indicadores de la rama WoE + `signos_incoherentes()` (H1, H4)~~ | ✅ hecho | — |
+| ~~1~~ | ~~Retirar indicadores de la rama WoE + `signos_incoherentes()` (H1, H4)~~ | ✅ hecho | n/a |
 | **1** | **Obtener datos con dimensión temporal y validar OOT (H2)** | Cambio de alcance | **Sí** |
 | **2** | **Definir e implementar marco de monitoreo (H3)** | 1 semana (tras H2) | **Sí** |
 | 4 | Binning monótono automático como contraste (H6) | 2–3 días | No |

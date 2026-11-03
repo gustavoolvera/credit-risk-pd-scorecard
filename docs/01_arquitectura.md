@@ -1,4 +1,4 @@
-# 01 — Arquitectura del sistema
+# 01: Arquitectura del sistema
 
 [← Índice](README.md) · [Siguiente: Fundamentos matemáticos →](02_fundamentos_matematicos.md)
 
@@ -15,8 +15,8 @@ src/*.py                             →  contienen la lógica, no se ejecutan s
 ```
 
 **Por qué [RECOM]:** un script procedural no puede importarse sin ejecutarse
-entero, luego no puede probarse. Toda lógica que decida algo relevante —cómo se
-limpia un dato, si un coeficiente es aceptable, dónde va el umbral— vive en
+entero, luego no puede probarse. Toda lógica que decida algo relevante (cómo se
+limpia un dato, si un coeficiente es aceptable, dónde va el umbral) vive en
 `src/` y está cubierta por pruebas. Los scripts solo encadenan llamadas.
 
 Esta separación se introdujo tarde en el desarrollo (ver
@@ -41,7 +41,7 @@ Probability_of_Default/
 ├── predict.py                   Inferencia sobre solicitantes nuevos
 │
 ├── src/
-│   ├── __init__.py              (vacío — marca el paquete)
+│   ├── __init__.py              (vacío - marca el paquete)
 │   ├── preprocessing.py         Limpieza por reglas + ingeniería de variables
 │   ├── woe.py                   Weight of Evidence e Information Value
 │   ├── evaluation.py            Métricas, calibración, regla de negocio, comparación pareada
@@ -139,7 +139,7 @@ esté aguas abajo.
 **Nota de acoplamiento [IMPL]:** `05_train_lightgbm.py` carga
 `artifacts/models/logistic_v1.joblib` y `xgboost_v1.joblib` para construir la
 comparación por validación cruzada de los tres modelos. Es un acoplamiento
-deliberado —permite usar particiones idénticas para los tres— pero implica que
+deliberado (permite usar particiones idénticas para los tres) pero implica que
 `05` no puede ejecutarse antes que `03` y `04`.
 
 ---
@@ -158,7 +158,7 @@ los datos**, luego puede aplicarse a cualquier conjunto sin riesgo de fuga.
 | `TARGET` | `"SeriousDlqin2yrs"` | Nombre de la variable objetivo | Dataset |
 | `SENTINELAS` | `[96, 98]` | Códigos de "dato no disponible" en las variables de morosidad | EDA |
 | `COLS_MORA` | 3 nombres | Las tres variables de conteo de atrasos | Dataset |
-| `REVUTIL_UMBRAL_INVALIDO` | `100.0` | Por encima, `RevolvingUtilization` deja de comportarse como deuda | EDA — ver §1.4.1.1 |
+| `REVUTIL_UMBRAL_INVALIDO` | `100.0` | Por encima, `RevolvingUtilization` deja de comportarse como deuda | EDA: ver §1.4.1.1 |
 | `EDAD_MINIMA` | `18` | Edad mínima plausible para un solicitante | Dominio |
 | `INGRESO_MINIMO_PLAUSIBLE` | `1.0` | Por debajo, el ingreso es un código, no un valor | EDA |
 
@@ -178,8 +178,8 @@ distinguirse del azar: se hunde a 3.03% en una banda y vuelve a 6.68% en la
 otra. Ninguna de las dos es compatible con "deuda extrema", que debería dar
 tasas del orden del 40% como las bandas inferiores. Indica corrupción de dato.
 
-**Contrafáctico crítico [MEDIDO]:** fijar el umbral en 1.0 —la elección
-intuitiva, ya que es un ratio— habría invalidado 2,640 filas con **37.50% de
+**Contrafáctico crítico [MEDIDO]:** fijar el umbral en 1.0 (la elección
+intuitiva, ya que es un ratio) habría invalidado 2,640 filas con **37.50% de
 default**, el grupo más predictivo del conjunto. La intuición matemática ("un
 ratio no puede superar 1") habría destruido la señal más fuerte disponible.
 
@@ -223,7 +223,7 @@ Construye 7 variables derivadas con lógica de negocio:
 | `lineas_no_inmobiliarias` | $\max(\text{OpenLines} - \text{RealEstate},\, 0)$ | Crédito no garantizado |
 | `prop_inmobiliaria` | $\dfrac{\text{RealEstate}}{\text{OpenLines}}$ | Fracción garantizada |
 
-**Corrección documentada [IMPL]** — `peor_atraso` contiene una salvaguarda
+**Corrección documentada [IMPL]**: `peor_atraso` contiene una salvaguarda
 explícita:
 
 ```python
@@ -317,7 +317,7 @@ libre. Esa exención **ocultó un defecto real**
 ([H1](07_auditoria.md#h1)): tres indicadores llegaron al modelo con el signo
 contrario a su comportamiento univariado.
 
-Se sustituyó por `signos_incoherentes()`, que es **estrictamente más fuerte** —
+Se sustituyó por `signos_incoherentes()`, que es **estrictamente más fuerte**:
 una prueba lo verifica explícitamente. La función original se conserva porque
 sus pruebas documentan la convención de signo del WoE.
 
@@ -382,8 +382,8 @@ relación variable–objetivo por deciles, correlaciones, gráficas.
 **Principio de diseño [RECOM]:** las gráficas usan datos **crudos y sin
 recortar**, con eje $y$ logarítmico. Un histograma recortado al percentil 99 se
 ve mejor pero oculta exactamente lo que el EDA debe encontrar. Las bimodalidades
-de `RevolvingUtilization` y `DebtRatio` —dos poblaciones separadas por un valle
-vacío— solo son visibles con el rango completo.
+de `RevolvingUtilization` y `DebtRatio` (dos poblaciones separadas por un valle
+vacío) solo son visibles con el rango completo.
 
 Salidas: `outputs/01_balance_target.png` … `05_colas_completas.png`.
 

@@ -1,4 +1,4 @@
-# 06 — Impacto de negocio e implicaciones regulatorias
+# 06: Impacto de negocio e implicaciones regulatorias
 
 [← Experimentos](05_experimentos.md) · [Índice](README.md) · [Siguiente: Revisión técnica →](07_auditoria.md)
 
@@ -411,7 +411,7 @@ defendible**.
 **Estimación de esfuerzo hasta desplegable [RECOM]:** H1 ya está cerrado. H3
 (marco de monitoreo) requiere alrededor de una semana **una vez existan datos
 temporales**. H2 (validación *out-of-time*) exige datos con dimensión temporal
-que este conjunto no posee — es un cambio de alcance, no una corrección.
+que este conjunto no posee: es un cambio de alcance, no una corrección.
 
 ---
 

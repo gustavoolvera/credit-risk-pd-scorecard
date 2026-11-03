@@ -1,7 +1,7 @@
 # Ablación del bloque de atrasos en XGBoost
 
 Experimento aislado (2026-11-03). Documentado en
-[docs/05_experimentos.md — E19](../../docs/05_experimentos.md#e19--ablación-del-bloque-de-atrasos-en-xgboost)
+[docs/05_experimentos.md: E19](../../docs/05_experimentos.md#e19-ablación-del-bloque-de-atrasos-en-xgboost)
 (el análisis previo de redundancia y fuga está en E18).
 
 **Resultado:** el bloque de atrasos es imprescindible (quitarlo cuesta 0.058 de
