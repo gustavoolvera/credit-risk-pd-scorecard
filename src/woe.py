@@ -125,9 +125,15 @@ def _tabla_woe(bins, y, suavizado=0.5):
     g = tabla.groupby("bin", observed=True)["y"].agg(n="size", eventos="sum")
     g["no_eventos"] = g["n"] - g["eventos"]
 
-    # Proporcion de cada bin dentro de su clase (con suavizado)
-    g["dist_eventos"] = (g["eventos"] + suavizado) / total_eventos
-    g["dist_no_eventos"] = (g["no_eventos"] + suavizado) / total_no_eventos
+    # Proporcion de cada bin dentro de su clase (con suavizado). El suavizado
+    # se suma tambien al denominador, una vez por bin (K bins -> +suavizado*K),
+    # para que cada distribucion siga sumando exactamente 1 y el IV sea una
+    # divergencia entre dos distribuciones de verdad. Frente a no ajustar el
+    # denominador, el WoE de toda la variable se desplaza en una constante
+    # (~1e-4), que en la regresion logistica absorbe el intercepto.
+    k = len(g)
+    g["dist_eventos"] = (g["eventos"] + suavizado) / (total_eventos + suavizado * k)
+    g["dist_no_eventos"] = (g["no_eventos"] + suavizado) / (total_no_eventos + suavizado * k)
 
     # El nucleo del metodo
     g["woe"] = np.log(g["dist_no_eventos"] / g["dist_eventos"])

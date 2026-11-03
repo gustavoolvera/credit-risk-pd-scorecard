@@ -32,7 +32,8 @@ from src.evaluation import (ks_statistic, gini, tabla_calibracion,
                             error_calibracion, signos_invertidos,
                             signos_incoherentes, direccion_univariada,
                             umbral_optimo, beneficio, beneficio_sin_modelo,
-                            validar_submission, ic_wilson, tabla_separacion)
+                            validar_submission, ic_wilson, tabla_separacion,
+                            coeficientes_estandarizados, diferencia_pareada_cv)
 
 
 # =============================================================================
@@ -121,6 +122,48 @@ def test_gini():
     assert gini(0.5) == pytest.approx(0.0)
     assert gini(1.0) == pytest.approx(1.0)
     assert gini(0.86272) == pytest.approx(0.72544)
+
+
+def test_nadeau_bengio_contra_calculo_manual():
+    """
+    d = [1, 2, 3, 4, 5] * 1e-3, J=5, n_test/n_train = 0.25 (5-fold)
+    media = 3e-3 | s^2 = 2.5e-6 | var = (0.2 + 0.25) * 2.5e-6 = 1.125e-6
+    se = 1.06066e-3 | t_{0.975, 4} = 2.776445
+    IC = 3e-3 +/- 2.944865e-3
+    """
+    a = np.array([0.861, 0.862, 0.863, 0.864, 0.865])
+    b = a - np.array([1, 2, 3, 4, 5]) * 1e-3
+    r = diferencia_pareada_cv(a, b, n_train=120_000, n_test=30_000)
+    assert r["diferencia"] == pytest.approx(3e-3)
+    assert r["ic_inf"] == pytest.approx(3e-3 - 2.944865e-3, abs=1e-9)
+    assert r["ic_sup"] == pytest.approx(3e-3 + 2.944865e-3, abs=1e-9)
+    assert r["gl"] == 4
+
+
+def test_nadeau_bengio_es_mas_ancho_que_el_t_ingenuo():
+    """La correccion solo puede ensanchar el intervalo, nunca estrecharlo."""
+    rng = np.random.default_rng(0)
+    a = 0.86 + rng.normal(0, 0.003, 5)
+    b = a - 0.002 + rng.normal(0, 0.001, 5)
+    corregido = diferencia_pareada_cv(a, b, 120_000, 30_000)
+    ingenuo = diferencia_pareada_cv(a, b, 1e12, 1)        # n_test/n_train ~ 0
+    assert (corregido["ic_sup"] - corregido["ic_inf"]) > (ingenuo["ic_sup"] - ingenuo["ic_inf"])
+    assert corregido["p"] > ingenuo["p"]
+
+
+def test_nadeau_bengio_es_antisimetrico():
+    a, b = np.array([0.86, 0.87, 0.85, 0.86, 0.865]), np.array([0.85, 0.86, 0.85, 0.855, 0.86])
+    ab, ba = diferencia_pareada_cv(a, b, 4, 1), diferencia_pareada_cv(b, a, 4, 1)
+    assert ab["diferencia"] == pytest.approx(-ba["diferencia"])
+    assert ab["ic_inf"] == pytest.approx(-ba["ic_sup"])
+    assert ab["p"] == pytest.approx(ba["p"])
+
+
+def test_nadeau_bengio_rechaza_entradas_invalidas():
+    with pytest.raises(ValueError):
+        diferencia_pareada_cv([0.86], [0.85], 4, 1)
+    with pytest.raises(ValueError):
+        diferencia_pareada_cv([0.86, 0.87], [0.85, 0.86], 0, 1)
 
 
 # =============================================================================
@@ -269,6 +312,58 @@ def test_la_comprobacion_completa_es_mas_estricta_que_la_antigua(datos_flags):
     assert antigua == {"woe_algo"}
     assert antigua < completa                      # subconjunto estricto
     assert completa == {"woe_algo", "flag_peligroso"}
+
+
+# =============================================================================
+# 3c. COEFICIENTES ESTANDARIZADOS
+# =============================================================================
+
+@pytest.fixture
+def logreg_dos_escalas():
+    """
+    Dos variables con el MISMO efecto por desviacion estandar pero con
+    dispersiones muy distintas. El beta bruto de 'estrecha' sale ~10 veces
+    mayor; el estandarizado debe salir parecido.
+    """
+    from sklearn.linear_model import LogisticRegression
+    rng = np.random.default_rng(0)
+    n = 20_000
+    X = pd.DataFrame({"woe_ancha": rng.normal(0, 1.0, n),
+                      "woe_estrecha": rng.normal(0, 0.1, n)})
+    logit = -2 - 0.8 * X["woe_ancha"] / 1.0 - 0.8 * X["woe_estrecha"] / 0.1
+    y = (rng.random(n) < 1 / (1 + np.exp(-logit))).astype(int)
+    return LogisticRegression(max_iter=1000).fit(X, y), X
+
+
+def test_coef_std_es_beta_por_sigma(logreg_dos_escalas):
+    m, X = logreg_dos_escalas
+    t = coeficientes_estandarizados(m, X)
+    assert list(t["variable"]) == list(X.columns)          # orden del modelo
+    np.testing.assert_allclose(t["beta"], m.coef_[0])
+    np.testing.assert_allclose(t["sigma"], X.std(ddof=1))
+    np.testing.assert_allclose(t["beta_std"], m.coef_[0] * X.std(ddof=1))
+    np.testing.assert_allclose(t["odds_ratio_1sd"], np.exp(t["beta_std"]))
+
+
+def test_coef_std_conserva_el_signo(logreg_dos_escalas):
+    m, X = logreg_dos_escalas
+    t = coeficientes_estandarizados(m, X)
+    assert (np.sign(t["beta_std"]) == np.sign(t["beta"])).all()
+
+
+def test_coef_std_corrige_la_escala(logreg_dos_escalas):
+    """El beta bruto exagera 'estrecha'; el estandarizado los iguala."""
+    m, X = logreg_dos_escalas
+    t = coeficientes_estandarizados(m, X).set_index("variable")
+    assert abs(t.loc["woe_estrecha", "beta"]) > 5 * abs(t.loc["woe_ancha", "beta"])
+    ratio = t.loc["woe_estrecha", "beta_std"] / t.loc["woe_ancha", "beta_std"]
+    assert 0.8 < ratio < 1.25
+
+
+def test_coef_std_rechaza_columnas_en_otro_orden(logreg_dos_escalas):
+    m, X = logreg_dos_escalas
+    with pytest.raises(ValueError):
+        coeficientes_estandarizados(m, X, columnas=["woe_estrecha", "woe_ancha"])
 
 
 # =============================================================================

@@ -65,7 +65,7 @@ COLS_MORA = [
 # (6.68%): deja de comportarse como deuda. Ademas el histograma log-log
 # (05_colas_completas.png) muestra dos modas separadas por un valle vacio,
 # y 100 cae justo en ese valle.
-# OJO: capear en 1 habria invalidado 2,640 filas con 37.50% de default,
+# Nota: capear en 1 habria invalidado 2,640 filas con 37.50% de default,
 # es decir el grupo mas predictivo del dataset.
 REVUTIL_UMBRAL_INVALIDO = 100.0
 

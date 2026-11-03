@@ -26,6 +26,8 @@ Lo que se guarda:
   - metadatos: fecha, semilla, filas usadas, tasa de default
 """
 
+import json
+import os
 from datetime import datetime
 from pathlib import Path
 
@@ -136,3 +138,42 @@ def resumen(artefacto):
     for k, v in artefacto["config_limpieza"].items():
         lineas.append(f"    {k:<28} = {v}")
     return "\n".join(lineas)
+
+
+# =============================================================================
+# RUTAS Y RESULTADOS GUARDADOS
+# =============================================================================
+
+def ruta_datos(raiz):
+    """
+    Carpeta con los CSV de Kaggle (cs-training.csv, cs-test.csv, sampleEntry.csv).
+
+    Orden de busqueda: variable de entorno PD_DATA_DIR, data/ dentro del
+    repositorio y, por compatibilidad con la estructura original del autor,
+    ../../data respecto al repositorio.
+    """
+    raiz = Path(raiz).resolve()
+    candidatas = ([Path(os.environ["PD_DATA_DIR"])] if os.environ.get("PD_DATA_DIR") else [])         + [raiz / "data", raiz.parent.parent / "data"]
+    for c in candidatas:
+        if (c / "cs-training.csv").exists():
+            return c
+    raise FileNotFoundError(
+        "No se encuentra cs-training.csv. Descarga los datos de "
+        "https://www.kaggle.com/c/GiveMeSomeCredit/data y colocalos en "
+        f"{raiz / 'data'} (o define PD_DATA_DIR). Buscado en: "
+        + ", ".join(str(c) for c in candidatas))
+
+
+def cargar_json(ruta):
+    """Lee un JSON de resultados; devuelve {} si todavia no existe."""
+    ruta = Path(ruta)
+    return json.loads(ruta.read_text(encoding="utf-8")) if ruta.exists() else {}
+
+
+def guardar_json(datos, ruta):
+    """Guarda un diccionario de resultados como JSON legible."""
+    ruta = Path(ruta)
+    ruta.parent.mkdir(parents=True, exist_ok=True)
+    ruta.write_text(json.dumps(datos, indent=2, ensure_ascii=False, default=float),
+                    encoding="utf-8")
+    return ruta

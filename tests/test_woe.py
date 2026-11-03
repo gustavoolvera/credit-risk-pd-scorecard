@@ -246,28 +246,43 @@ def test_woe_e_iv_contra_calculo_manual():
 
         bin (-inf, 0]:  n=6  eventos=1  no_eventos=5
         bin (0, inf]:   n=4  eventos=3  no_eventos=1
-        totales:        eventos=4  no_eventos=6
+        totales:        eventos=4  no_eventos=6   K=2 bins
+        denominadores:  4 + 0.5*2 = 5             6 + 0.5*2 = 7
 
-        dist_ev_1  = (1+0.5)/4 = 0.375        dist_no_1 = (5+0.5)/6 = 0.916667
-        WoE_1 = ln(0.916667/0.375) = +0.893818
-        IV_1  = (0.916667-0.375) * 0.893818   = 0.484151
+        dist_ev_1  = (1+0.5)/5 = 0.3          dist_no_1 = (5+0.5)/7 = 0.785714
+        WoE_1 = ln(0.785714/0.3) = +0.962811
+        IV_1  = (0.785714-0.3) * 0.962811     = 0.467651
 
-        dist_ev_2  = (3+0.5)/4 = 0.875        dist_no_2 = (1+0.5)/6 = 0.25
-        WoE_2 = ln(0.25/0.875) = -1.252763
-        IV_2  = (0.25-0.875) * (-1.252763)    = 0.782977
+        dist_ev_2  = (3+0.5)/5 = 0.7          dist_no_2 = (1+0.5)/7 = 0.214286
+        WoE_2 = ln(0.214286/0.7) = -1.183770
+        IV_2  = (0.214286-0.7) * (-1.183770)  = 0.574974
 
-        IV total = 1.267128
+        IV total = 1.042625
     """
     x = pd.Series([0, 0, 0, 0, 0, 0, 1, 1, 1, 1], dtype=float)
     y = pd.Series([0, 0, 0, 0, 0, 1, 0, 1, 1, 1])
 
     g = w.evaluar_binning(x, y, [-np.inf, 0, np.inf], minimo_eventos=1)
 
-    assert g["woe"].iloc[0] == pytest.approx(0.893818, rel=1e-5)
-    assert g["woe"].iloc[1] == pytest.approx(-1.252763, rel=1e-5)
-    assert g["iv_parcial"].iloc[0] == pytest.approx(0.484151, rel=1e-5)
-    assert g["iv_parcial"].iloc[1] == pytest.approx(0.782977, rel=1e-5)
-    assert g.attrs["iv_total"] == pytest.approx(1.267128, rel=1e-5)
+    assert g["woe"].iloc[0] == pytest.approx(0.962811, rel=1e-5)
+    assert g["woe"].iloc[1] == pytest.approx(-1.183770, rel=1e-5)
+    assert g["iv_parcial"].iloc[0] == pytest.approx(0.467651, rel=1e-5)
+    assert g["iv_parcial"].iloc[1] == pytest.approx(0.574974, rel=1e-5)
+    assert g.attrs["iv_total"] == pytest.approx(1.042625, rel=1e-5)
+
+
+def test_distribuciones_suavizadas_suman_uno():
+    """
+    Con el suavizado tambien en el denominador (+0.5 por bin), %eventos y
+    %no-eventos son distribuciones de verdad: cada una suma 1 exactamente,
+    incluso con bins vacios de una clase.
+    """
+    x = pd.Series([0.0] * 50 + [1.0] * 50 + [2.0] * 30)
+    y = pd.Series([0] * 50 + [1] * 50 + [0] * 20 + [1] * 10)
+    g = w.evaluar_binning(x, y, [-np.inf, 0, 1, np.inf], minimo_eventos=0)
+
+    assert g["dist_eventos"].sum() == pytest.approx(1.0, abs=1e-12)
+    assert g["dist_no_eventos"].sum() == pytest.approx(1.0, abs=1e-12)
 
 
 def test_convencion_de_signo_del_woe():
@@ -297,6 +312,27 @@ def test_iv_total_es_la_suma_de_los_parciales(continua):
     x, y = continua
     g = w.evaluar_binning(x, y, w.chimerge(x, y))
     assert g.attrs["iv_total"] == pytest.approx(g["iv_parcial"].sum())
+
+
+def test_calcular_iv_suma_parciales_y_ordena():
+    """calcular_iv: IV = suma de los IV parciales; tabla de mayor a menor IV."""
+    X = pd.DataFrame({"age": [25.0] * 50 + [60.0] * 50,
+                      "MonthlyIncome": [3000.0] * 50 + [8000.0] * 50})
+    y = pd.Series([0] * 30 + [1] * 20 + [0] * 48 + [1] * 2)
+    tablas = w.aprender_woe(X, y)
+    iv = w.calcular_iv(tablas).set_index("variable")
+    for col, t in tablas.items():
+        assert iv.loc[col, "IV"] == pytest.approx(round(t["iv_parcial"].sum(), 4))
+        assert iv.loc[col, "n_bins"] == len(t)
+    assert list(iv["IV"]) == sorted(iv["IV"], reverse=True)
+
+
+@pytest.mark.parametrize("iv, esperado", [(0.01, "inutil"), (0.05, "debil"), (0.2, "medio"),
+                                          (0.4, "fuerte"), (0.8, "sospechoso (revisar)")])
+def test_calcular_iv_clasifica_la_fuerza(iv, esperado):
+    """Escala de Siddiqi: <0.02 inutil, <0.1 debil, <0.3 medio, <0.5 fuerte."""
+    tabla = pd.DataFrame({"iv_parcial": [iv]})
+    assert w.calcular_iv({"x": tabla}).loc[0, "fuerza"] == esperado
 
 
 # =============================================================================

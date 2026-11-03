@@ -125,6 +125,46 @@ def gini(auc):
     return 2.0 * auc - 1.0
 
 
+def diferencia_pareada_cv(scores_a, scores_b, n_train, n_test, nivel=0.95):
+    """
+    Compara dos modelos evaluados en LOS MISMOS folds de validacion cruzada.
+
+    Usa el t-test con varianza corregida de Nadeau & Bengio (2003), en la
+    forma de Bouckaert & Frank (2004) para validacion cruzada:
+
+        d_j  = score_a_j - score_b_j          (j = 1..J folds)
+        var  = (1/J + n_test/n_train) * s_d^2  (s_d^2 con ddof=1)
+        IC   = media(d) +/- t_{J-1} * sqrt(var)
+
+    POR QUE NO EL t-TEST PAREADO HABITUAL
+    Los conjuntos de entrenamiento de distintos folds comparten la mayor parte
+    de sus filas, asi que las d_j no son independientes. Con 1/J sola la
+    varianza queda subestimada y el test declara diferencias que no existen.
+    El termino n_test/n_train corrige esa dependencia (en k-fold vale
+    1/(k-1)).
+
+    Limitacion: con pocos folds la estimacion de s_d^2 es muy ruidosa y el
+    test tiene poca potencia. Un intervalo que incluye 0 NO demuestra
+    equivalencia.
+
+    Devuelve dict: diferencia, ic_inf, ic_sup, p, gl.
+    """
+    from scipy import stats
+
+    d = np.asarray(scores_a, dtype=float) - np.asarray(scores_b, dtype=float)
+    if d.ndim != 1 or len(d) < 2:
+        raise ValueError("hacen falta al menos 2 folds emparejados")
+    if n_train <= 0 or n_test <= 0:
+        raise ValueError("n_train y n_test deben ser positivos")
+    J = len(d)
+    se = np.sqrt((1 / J + n_test / n_train) * np.var(d, ddof=1))
+    q = stats.t.ppf(0.5 + nivel / 2, J - 1)
+    t = d.mean() / se if se > 0 else 0.0
+    return {"diferencia": float(d.mean()),
+            "ic_inf": float(d.mean() - q * se), "ic_sup": float(d.mean() + q * se),
+            "p": float(2 * stats.t.sf(abs(t), J - 1)), "gl": J - 1}
+
+
 # =============================================================================
 # CALIBRACION
 # =============================================================================
@@ -236,6 +276,52 @@ def signos_incoherentes(coeficientes, columnas, X_train, y_train,
         if np.sign(c[col]) != esperado:
             problemas.append(col)
     return problemas
+
+
+# =============================================================================
+# INTERPRETABILIDAD DE LA REGRESION LOGISTICA
+# =============================================================================
+
+def coeficientes_estandarizados(modelo, X_train, columnas=None):
+    """
+    Coeficientes estandarizados de una regresion logistica:
+
+        beta_std_j = beta_j * sigma(X_j)
+
+    beta_std_j es el cambio en log-odds del predictor lineal cuando X_j sube
+    UNA desviacion estandar, con las demas variables fijas.
+
+    POR QUE HACE FALTA
+    Todas las variables WoE estan en la misma UNIDAD (log-odds), pero no con
+    la misma DISPERSION: un beta grande sobre una variable que casi no varia
+    entre clientes mueve poco la prediccion. Ordenar por |beta| bruto premia
+    a esas variables; ordenar por |beta * sigma| no.
+
+    No es una medida de importancia predictiva: mide el tamano del efecto
+    sobre el predictor lineal, no cuanto empeora el modelo sin la variable.
+
+    sigma se calcula con X_train (el mismo conjunto con el que se ajusto el
+    modelo), nunca con validacion o test.
+
+    Devuelve un DataFrame en el ORDEN DEL MODELO con: variable, beta, sigma,
+    beta_std y odds_ratio_1sd = exp(beta_std).
+    """
+    if columnas is None:
+        columnas = list(modelo.feature_names_in_)
+    columnas = list(columnas)
+    if hasattr(modelo, "feature_names_in_") and \
+            list(modelo.feature_names_in_) != columnas:
+        raise ValueError("columnas no coincide con el orden del modelo")
+
+    beta = np.asarray(modelo.coef_[0], dtype=float)
+    sigma = X_train[columnas].std(ddof=1).to_numpy()
+    return pd.DataFrame({
+        "variable": columnas,
+        "beta": beta,
+        "sigma": sigma,
+        "beta_std": beta * sigma,
+        "odds_ratio_1sd": np.exp(beta * sigma),
+    })
 
 
 # =============================================================================
