@@ -2,12 +2,16 @@
   "modelo":"LogisticRegression (WoE)",
   "subconjunto":"H: solo las 10 originales",
   "n_variables":10,
-  "auc_train":0.85747,
-  "auc_val":0.86059,
-  "ks_val":0.57197,
-  "average_precision_val":0.38821,
-  "auc_cv_media":0.85794,
+  "tol_lbfgs":0.00000001,
+  "n_iter_lbfgs":40,
+  "auc_train":0.85746,
+  "auc_val":0.86061,
+  "ks_val":0.57218,
+  "average_precision_val":0.38832,
+  "auc_cv_media":0.85792,
   "auc_cv_desv":0.00359,
-  "error_calibracion_pp":0.717,
-  "gini_val":0.7212
+  "error_calibracion_pp":0.733,
+  "gini_val":0.7212,
+  "brier_val":0.04994,
+  "brier_skill_score_val":0.1992
 }

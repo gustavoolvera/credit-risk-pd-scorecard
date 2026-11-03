@@ -1,0 +1,62 @@
+variable,rango,n,pct_pobl,default_pct,woe,puntos,puntos_rel
+RevolvingUtilizationOfUnsecuredLines,"(-0.1, 0.1]",51687,43.07,1.84,1.3406,79.8,0.0
+RevolvingUtilizationOfUnsecuredLines,"(0.1, 0.3]",22660,18.88,3.11,0.8035,70.4,-9.4
+RevolvingUtilizationOfUnsecuredLines,"(0.3, 0.5]",12673,10.56,5.74,0.1613,59.1,-20.7
+RevolvingUtilizationOfUnsecuredLines,"(0.5, 0.7]",9125,7.6,9.62,-0.3963,49.3,-30.5
+RevolvingUtilizationOfUnsecuredLines,"(0.7, 0.9]",7889,6.57,15.17,-0.915,40.1,-39.7
+RevolvingUtilizationOfUnsecuredLines,"(0.9, 1.0]",13326,11.1,19.31,-1.2058,35.0,-44.8
+RevolvingUtilizationOfUnsecuredLines,"(1.0, inf]",2468,2.06,39.67,-2.2166,17.2,-62.6
+RevolvingUtilizationOfUnsecuredLines,FALTANTE,172,0.14,6.4,0.0064,56.3,-23.5
+age,"(-0.1, 30.0]",8633,7.19,11.25,-0.5704,49.7,-1.8
+age,"(30.0, 40.0]",19507,16.26,9.79,-0.4153,51.5,0.0
+age,"(40.0, 45.0]",12911,10.76,8.47,-0.2554,53.3,1.8
+age,"(45.0, 50.0]",15024,12.52,7.99,-0.1929,54.0,2.5
+age,"(50.0, 55.0]",14305,11.92,7.21,-0.0819,55.3,3.8
+age,"(55.0, 60.0]",13585,11.32,5.23,0.2614,59.2,7.7
+age,"(60.0, 65.0]",13184,10.99,4.1,0.5149,62.1,10.6
+age,"(65.0, 72.0]",11377,9.48,2.74,0.9313,66.8,15.3
+age,"(72.0, inf]",11473,9.56,2.19,1.1626,69.4,17.9
+age,FALTANTE,1,0.0,0.0,-1.5371,38.8,-12.7
+NumberOfTime30-59DaysPastDueNotWorse,"(-0.1, 0.0]",100794,84.0,4.03,0.535,63.8,0.0
+NumberOfTime30-59DaysPastDueNotWorse,"(0.0, 1.0]",12844,10.7,14.86,-0.8902,43.7,-20.1
+NumberOfTime30-59DaysPastDueNotWorse,"(1.0, 3.0]",5110,4.26,28.88,-1.7352,31.8,-32.0
+NumberOfTime30-59DaysPastDueNotWorse,"(3.0, inf]",1038,0.86,44.41,-2.4117,22.2,-41.6
+NumberOfTime30-59DaysPastDueNotWorse,FALTANTE,214,0.18,54.67,-2.8225,16.4,-47.4
+DebtRatio_limpio,"(-0.1, 0.2]",32421,27.02,6.11,0.096,58.6,0.0
+DebtRatio_limpio,"(0.2, 0.4]",30638,25.53,5.64,0.1804,60.7,2.1
+DebtRatio_limpio,"(0.4, 0.6]",17262,14.38,7.75,-0.1596,52.3,-6.3
+DebtRatio_limpio,"(0.6, 1.0]",10088,8.41,10.63,-0.5068,43.7,-14.9
+DebtRatio_limpio,"(1.0, inf]",4096,3.41,12.57,-0.6975,39.0,-19.6
+DebtRatio_limpio,FALTANTE,25495,21.25,5.44,0.2199,61.7,3.1
+MonthlyIncome,"(-0.1, 2000.0]",7854,6.54,9.43,-0.3747,56.0,-0.4
+MonthlyIncome,"(2000.0, 3000.0]",10481,8.73,9.72,-0.4077,56.0,-0.4
+MonthlyIncome,"(3000.0, 4000.0]",12326,10.27,8.65,-0.2788,56.1,-0.3
+MonthlyIncome,"(4000.0, 5400.0]",15995,13.33,7.75,-0.1596,56.1,-0.3
+MonthlyIncome,"(5400.0, 7000.0]",15488,12.91,6.4,0.0468,56.3,-0.1
+MonthlyIncome,"(7000.0, 9000.0]",12940,10.78,5.38,0.231,56.4,0.0
+MonthlyIncome,"(9000.0, 12000.0]",10854,9.04,4.48,0.4236,56.5,0.1
+MonthlyIncome,"(12000.0, inf]",8567,7.14,4.62,0.39,56.5,0.1
+MonthlyIncome,FALTANTE,25495,21.25,5.44,0.2201,56.4,0.0
+NumberOfOpenCreditLinesAndLoans,"(-0.1, 3.0]",17607,14.67,10.81,-0.5263,55.2,-1.5
+NumberOfOpenCreditLinesAndLoans,"(3.0, 5.0]",19602,16.34,6.36,0.0528,56.3,-0.4
+NumberOfOpenCreditLinesAndLoans,"(5.0, 8.0]",31477,26.23,5.35,0.2362,56.7,0.0
+NumberOfOpenCreditLinesAndLoans,"(8.0, 12.0]",29092,24.24,5.97,0.1199,56.5,-0.2
+NumberOfOpenCreditLinesAndLoans,"(12.0, inf]",22222,18.52,6.51,0.028,56.3,-0.4
+NumberOfTimes90DaysLate,"(-0.1, 0.0]",113294,94.41,4.61,0.3931,62.2,0.0
+NumberOfTimes90DaysLate,"(0.0, 1.0]",4230,3.52,33.83,-1.9652,26.4,-35.8
+NumberOfTimes90DaysLate,"(1.0, 3.0]",1786,1.49,52.07,-2.7188,15.0,-47.2
+NumberOfTimes90DaysLate,"(3.0, inf]",476,0.4,66.6,-3.3244,5.8,-56.4
+NumberOfTimes90DaysLate,FALTANTE,214,0.18,54.67,-2.8225,13.4,-48.8
+NumberRealEstateLoansOrLines,"(-0.1, 0.0]",44900,37.42,8.33,-0.2378,52.1,0.0
+NumberRealEstateLoansOrLines,"(0.0, 1.0]",41928,34.94,5.22,0.2622,60.8,8.7
+NumberRealEstateLoansOrLines,"(1.0, 2.0]",25254,21.04,5.57,0.1946,59.6,7.5
+NumberRealEstateLoansOrLines,"(2.0, inf]",7918,6.6,8.65,-0.2797,51.3,-0.8
+NumberOfTime60-89DaysPastDueNotWorse,"(-0.1, 0.0]",113881,94.9,5.09,0.2906,59.3,0.0
+NumberOfTime60-89DaysPastDueNotWorse,"(0.0, 1.0]",4626,3.86,31.19,-1.8451,36.4,-22.9
+NumberOfTime60-89DaysPastDueNotWorse,"(1.0, inf]",1279,1.07,52.38,-2.7314,26.9,-32.4
+NumberOfTime60-89DaysPastDueNotWorse,FALTANTE,214,0.18,54.67,-2.8226,25.9,-33.4
+NumberOfDependents,"(-0.1, 0.0]",69494,57.91,5.85,0.1417,57.3,0.0
+NumberOfDependents,"(0.0, 1.0]",21118,17.6,7.42,-0.1131,55.4,-1.9
+NumberOfDependents,"(1.0, 2.0]",15600,13.0,8.14,-0.213,54.7,-2.6
+NumberOfDependents,"(2.0, inf]",10660,8.88,9.17,-0.3428,53.7,-3.6
+NumberOfDependents,FALTANTE,3128,2.61,4.41,0.4364,59.4,2.1

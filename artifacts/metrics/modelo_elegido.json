@@ -1,0 +1,56 @@
+{
+  "modelo": "lightgbm_v1",
+  "nombre": "LightGBM",
+  "regla": "AUC_cv >= max - 0.002; desempate por menor Calib_pp medio (CV 5x5 sobre las 120,000 filas de train)",
+  "usa_validacion": false,
+  "elegibles": [
+    "lightgbm_v1",
+    "xgboost_v1"
+  ],
+  "medias_cv": [
+    {
+      "modelo": "lightgbm_v1",
+      "AUC": 0.865202,
+      "Calib_pp": 0.31852,
+      "Brier": 0.048971,
+      "Benef_sol": 522.934
+    },
+    {
+      "modelo": "logistic_v1",
+      "AUC": 0.856975,
+      "Calib_pp": 0.64244,
+      "Brier": 0.050262,
+      "Benef_sol": 513.168
+    },
+    {
+      "modelo": "xgboost_v1",
+      "AUC": 0.865292,
+      "Calib_pp": 0.34996,
+      "Brier": 0.048961,
+      "Benef_sol": 522.559333
+    }
+  ],
+  "diferencias_elegibles": {
+    "AUC": {
+      "diferencia": -9e-05,
+      "ic_inf": -0.000783,
+      "ic_sup": 0.000603,
+      "p": 0.790497,
+      "gl": 24
+    },
+    "Calib_pp": {
+      "diferencia": -0.03144,
+      "ic_inf": -0.105687,
+      "ic_sup": 0.042807,
+      "p": 0.390803,
+      "gl": 24
+    },
+    "Brier": {
+      "diferencia": 9e-06,
+      "ic_inf": -7.1e-05,
+      "ic_sup": 9e-05,
+      "p": 0.811193,
+      "gl": 24
+    }
+  }
+}

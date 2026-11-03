@@ -1,0 +1,4 @@
+modelo,auc_cv_media,auc_cv_desv
+LogReg (WoE),0.85794,0.00359
+XGBoost,0.86628,0.00306
+LightGBM,0.86619,0.00343
