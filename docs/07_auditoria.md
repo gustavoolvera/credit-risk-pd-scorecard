@@ -1,4 +1,4 @@
-# 07 — Auditoría técnica independiente
+# 07 — Revisión técnica interna
 
 [← Negocio y regulación](06_negocio_y_regulacion.md) · [Índice](README.md) · [Siguiente: Comparación metodológica →](08_comparacion_metodologica.md)
 
@@ -6,9 +6,10 @@
 
 ## 7.0 Alcance y método
 
-Esta revisión **no asume que la implementación sea correcta**. Cada afirmación
-del proyecto se ha contrastado contra el código y contra ejecuciones
-independientes.
+Revisión crítica hecha por el propio autor del proyecto: **no es una validación
+independiente** en el sentido regulatorio (segunda o tercera línea). No asume
+que la implementación sea correcta; cada afirmación se contrasta contra el
+código y contra ejecuciones desde cero.
 
 **Método aplicado:**
 
@@ -75,15 +76,18 @@ contaminación. Ver [H13](#h13).
 
 ### V4 — El AUC reportado no está inflado ✅
 
-Validación cruzada anidada (rejilla completa dentro de cada fold):
+Validación cruzada anidada (rejilla completa dentro de cada fold;
+`experiments/cv_anidada/`):
 
-| | Media | Desv. |
+| | Media | Desv. (`ddof=0`) |
 |---|---|---|
 | CV reportada | 0.86628 | 0.00306 |
-| Nested CV | **0.86661** | 0.00337 |
+| CV anidada | **0.86647** | 0.00323 |
 
-Diferencia −0.00028: por debajo del ruido. **Éste era el único experimento capaz
-de invalidar la conclusión central.**
+Diferencia +0.00018, IC 95 % [-0.00084, +0.00120]: no se detecta optimismo.
+
+*Corrección (2026-11-03):* esta sección citaba 0.86661 ± 0.00337 sin un script
+que lo respaldara; las cifras actuales provienen de un script versionado.
 
 ### V5 — Determinismo ✅
 
@@ -96,7 +100,9 @@ $$\max_i \left| \text{Score}_i^{\text{suma de puntos}} - \text{Score}_i^{\text{t
 
 ### V7 — Aditividad de SHAP ✅
 
-$$\phi_0 + \sum_i \phi_i = -2.6612 + 4.7953 = +2.1341 \;\Rightarrow\; \sigma(2.1341) = 89.4\% = \hat p_{\text{modelo}}$$
+$$\phi_0 + \sum_i \phi_i = -2.6593 + 4.5252 = +1.8659 \;\Rightarrow\; \sigma(1.8659) = 86.6\% = \hat p_{\text{modelo}}$$
+
+(XGBoost, cliente #22556; `experiments/shap_xgboost/`.)
 
 ### V8 — Integridad de artefactos ✅
 
@@ -121,7 +127,7 @@ comportamiento univariado**:
 
 | Variable | Evento si = 1 | si = 0 | Dirección real | $\beta$ | Coherencia |
 |---|---|---|---|---|---|
-| `flag_registro_invalido` | **54.67%** | 6.60% | **más riesgo** | **−0.5852** | ❌ |
+| `flag_registro_invalido` | **54.67%** | 6.60% | **más riesgo** | **-0.5852** | ❌ |
 | `flag_revutil_invalido` | 6.40% | 6.68% | menos riesgo | +0.1042 | ❌ |
 | `flag_debtratio_invalido` | 5.55% | 6.98% | menos riesgo | +0.5563 | ❌ |
 
@@ -145,7 +151,7 @@ la **atribución**. Y la atribución es la única razón de ser de un scorecard.
 
 | Indicador | Variable WoE asociada | Filas | Valor WoE único | Coincidencia |
 |---|---|---|---|---|
-| `flag_registro_invalido` | `woe_NumberOfTimes90DaysLate` | 214 | −2.8228 | **100%** |
+| `flag_registro_invalido` | `woe_NumberOfTimes90DaysLate` | 214 | -2.8228 | **100%** |
 | `flag_debtratio_invalido` | `woe_DebtRatio_limpio` | 24,718 | +0.1976 | **100%** |
 | `flag_revutil_invalido` | `woe_RevolvingUtilizationOfUnsecuredLines` | 172 | +0.0059 | **100%** |
 
@@ -222,13 +228,13 @@ codifica esa información con su propio nivel de riesgo medido.
 
 | Métrica | Antes (18 vars) | Después (10 vars) | Δ |
 |---|---|---|---|
-| AUC validación | 0.86272 | 0.86059 | −0.00257 |
-| AUC (CV) | 0.85948 | 0.85794 | −0.00187 |
-| KS | 0.5760 | 0.5696 | −0.0064 |
-| Average Precision | 0.3938 | 0.3869 | −0.0069 |
+| AUC validación | 0.86272 | 0.86059 | -0.00257 |
+| AUC (CV) | 0.85948 | 0.85794 | -0.00187 |
+| KS | 0.5760 | 0.5696 | -0.0064 |
+| Average Precision | 0.3938 | 0.3869 | -0.0069 |
 | Calibración | 0.53 pp | **0.75 pp** | **peor** |
 | VIF máximo | 8.8 | **1.3** | mejor |
-| Valor de negocio | $175.33 | $171.95 | −$3.38 |
+| Valor de negocio | $175.33 | $171.95 | -$3.38 |
 | **Coeficientes incoherentes** | **3** | **0** | ✅ |
 
 **Lectura honesta:** la corrección **empeora las cinco métricas de rendimiento**,
@@ -456,7 +462,7 @@ uniformes.
 que se modelan por separado en un sistema IRB completo. LGD depende de garantías,
 antigüedad y agresividad de recobro; EAD del uso de líneas comprometidas.
 
-**Consecuencia:** el valor unitario de $180.37 es indicativo, no una estimación
+**Consecuencia:** el valor unitario (~$180 por solicitud) es indicativo, no una estimación
 de ECL auditada.
 
 **Estado:** documentado. Fuera del alcance del proyecto.

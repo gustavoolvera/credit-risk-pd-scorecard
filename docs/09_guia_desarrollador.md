@@ -101,19 +101,14 @@ Las pruebas usan datos sintéticos, luego funcionan **antes** de generar nada.
 
 ### 9.1.4 Ubicación de los datos
 
-Los CSV originales deben estar en `../../data/` respecto al proyecto:
+Los CSV de Kaggle (`cs-training.csv`, `cs-test.csv`, `sampleEntry.csv`) no se
+versionan. `src/artifacts.ruta_datos()` los busca en este orden:
 
-```
-Give Me Some Credit (PD)/
-├── data/
-│   ├── cs-training.csv
-│   ├── cs-test.csv
-│   ├── sampleEntry.csv
-│   └── Data Dictionary.xls
-└── programs/Probability_of_Default/    ← ejecutar desde aquí
-```
+1. la carpeta indicada en la variable de entorno `PD_DATA_DIR`;
+2. `data/` dentro del repositorio (ignorada por git);
+3. `../../data/` respecto al repositorio (la estructura original del autor).
 
-Si se mueven, hay que actualizar la constante `DATA` en `01`, `02` y `06`.
+Si no los encuentra, el error indica dónde descargarlos y qué rutas revisó.
 
 ---
 

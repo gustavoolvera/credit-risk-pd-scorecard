@@ -318,7 +318,7 @@ lo que es inmune al cambio de unidad:
 | Grupo | n | Rango de tasas por decil | Spearman | $p$ |
 |---|---|---|---|---|
 | **Con denominador** | 94,505 | 5.05% → 12.15% | **+0.709** | 0.022 |
-| **Sin denominador** | 25,495 | 4.10% – 8.43% (sin dirección) | **−0.042** | 0.907 |
+| **Sin denominador** | 25,495 | 4.10% – 8.43% (sin dirección) | **-0.042** | 0.907 |
 
 Con denominador, `DebtRatio` ordena el riesgo de forma creciente en su mitad
 superior: es apalancamiento y se comporta como tal. Sin denominador, el importe
@@ -395,7 +395,7 @@ como **experimento medido** contra el AUC de validación, no como supuesto.
 
 | Medida | Valor |
 |---|---|
-| Pearson (todos los datos) | **−0.0018** |
+| Pearson (todos los datos) | **-0.0018** |
 | Pearson (solo filas $\leq 1$) | 0.2494 |
 | Spearman (por rangos) | 0.2404 |
 
@@ -404,7 +404,7 @@ Y el análisis por deciles:
 $$2.52 \to 1.36 \to 1.40 \to 1.91 \to 2.37 \to 3.47 \to 5.25 \to 8.80 \to 16.59 \to 23.17\ \%$$
 
 La variable **más predictiva del conjunto** aparecía como ruido bajo Pearson
-(−0.002), únicamente porque 223 filas tienen valores absurdos.
+(-0.002), únicamente porque 223 filas tienen valores absurdos.
 
 **[TEORÍA]** Pearson mide asociación **lineal** y su estimador es
 extraordinariamente sensible a outliers, porque los momentos de segundo orden
@@ -444,7 +444,7 @@ que un analista de riesgo formularía; ninguna es una combinación arbitraria.
 
 | Rama | Con las 7 derivadas | Sin ellas | Diferencia |
 |---|---|---|---|
-| Regresión logística (AUC val.) | 0.86300 | 0.86272 | −0.00028 |
+| Regresión logística (AUC val.) | 0.86300 | 0.86272 | -0.00028 |
 | XGBoost (AUC early-stop) | 0.86350 | 0.86405 | **+0.00055** |
 
 *(Medición del momento en que se tomó la decisión; el modelo lineal de referencia
@@ -557,16 +557,16 @@ grupo real, generado por el techo que impone el banco, con 19.31% de evento.
 | 0 – 0.1 | 51,687 | 43.07% | 1.84% | **+1.3401** |
 | 0.1 – 0.3 | 22,660 | 18.88% | 3.11% | +0.8031 |
 | 0.3 – 0.5 | 12,673 | 10.56% | 5.74% | +0.1609 |
-| 0.5 – 0.7 | 9,125 | 7.60% | 9.62% | −0.3968 |
-| 0.7 – 0.9 | 7,889 | 6.57% | 15.17% | −0.9155 |
-| 0.9 – 1.0 | 13,326 | 11.10% | 19.31% | −1.2063 |
-| > 1.0 | 2,468 | 2.06% | 39.67% | **−2.2171** |
+| 0.5 – 0.7 | 9,125 | 7.60% | 9.62% | -0.3968 |
+| 0.7 – 0.9 | 7,889 | 6.57% | 15.17% | -0.9155 |
+| 0.9 – 1.0 | 13,326 | 11.10% | 19.31% | -1.2063 |
+| > 1.0 | 2,468 | 2.06% | 39.67% | **-2.2171** |
 | **FALTANTE** | 172 | 0.14% | 6.40% | **+0.0059** |
 
 **El bin FALTANTE valida la decisión de umbral.** Su WoE es esencialmente cero:
 las 172 filas invalidadas se comportan de forma indistinguible del promedio
 poblacional, que es exactamente lo que se esperaba de ruido puro. Si se hubieran
-capeado en lugar de invalidado, habrían caído en el bin `> 1.0` con WoE −2.22,
+capeado en lugar de invalidado, habrían caído en el bin `> 1.0` con WoE -2.22,
 es decir etiquetadas como riesgo máximo teniendo riesgo medio.
 
 ### 3.8.4 Limitación del binning manual

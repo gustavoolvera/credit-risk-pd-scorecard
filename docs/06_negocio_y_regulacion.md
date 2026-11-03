@@ -1,6 +1,6 @@
 # 06 — Impacto de negocio e implicaciones regulatorias
 
-[← Experimentos](05_experimentos.md) · [Índice](README.md) · [Siguiente: Auditoría →](07_auditoria.md)
+[← Experimentos](05_experimentos.md) · [Índice](README.md) · [Siguiente: Revisión técnica →](07_auditoria.md)
 
 ---
 
@@ -52,11 +52,11 @@ rechazar por debajo.
 |---|---|---|---|---|
 | Aprobar a todos (sin modelo) | 30,000 | 27,995 | 2,005 | $10,366,000 |
 | Aprobar a nadie | 0 | 0 | 0 | $0 |
-| **Modelo, umbral 11.76%** | **25,833** | **25,114** | **719** | **$15,777,200** |
+| **Modelo (LightGBM), umbral 11.76%** | **25,868** | **25,153** | **715** | **$15,832,400** |
 
-$$\Delta = \$15{,}777{,}200 - \$10{,}366{,}000 = \boxed{\$5{,}411{,}200}$$
+$$\Delta = \$15{,}832{,}400 - \$10{,}366{,}000 = \boxed{\$5{,}466{,}400}$$
 
-$$\text{Valor unitario} = \frac{\$5{,}411{,}200}{30{,}000} = \boxed{\$180.37 \text{ por solicitud evaluada}}$$
+$$\text{Valor unitario} = \frac{\$5{,}466{,}400}{30{,}000} = \boxed{\$182.21 \text{ por solicitud evaluada}}$$
 
 ### 6.2.2 Mecánica del valor
 
@@ -74,7 +74,7 @@ un cliente bueno**.
 
 | Modelo | Beneficio | Por solicitud |
 |---|---|---|
-| LogReg (WoE, 10 vars) | $15,543,600 | $172.59 |
+| LogReg (WoE, 10 vars) | $15,562,400 | $173.21 |
 | XGBoost | $15,777,200 | $180.37 |
 | **LightGBM** | **$15,832,400** | **$182.21** |
 
@@ -86,29 +86,35 @@ alrededor del 11.76%.
 
 ## 6.3 Cuándo el modelo NO aporta valor
 
-**[MEDIDO]** Variando el ratio $L/M$:
+**[MEDIDO]** Variando el ratio $L/M$ (LightGBM, el modelo elegido;
+`artifacts/metrics/business_sensibilidad.csv`):
 
 | $L/M$ | Umbral óptimo | Sin modelo | Con modelo | Ganancia |
 |---|---|---|---|---|
-| **0.5** | 66.67% | $21,594,000 | $21,580,800 | **−$13,200** ❌ |
-| 1.0 | 50.00% | $20,792,000 | $20,896,800 | +$104,800 |
-| 2.0 | 33.33% | $19,188,000 | $19,736,800 | +$548,800 |
-| 3.0 | 25.00% | $17,584,000 | $18,734,400 | +$1,150,400 |
-| 5.0 | 16.67% | $14,376,000 | $17,228,000 | +$2,852,000 |
-| **7.5** | **11.76%** | $10,366,000 | $15,777,600 | **+$5,411,600** |
-| 10.0 | 9.09% | $6,356,000 | $14,157,600 | +$7,801,600 |
-| **15.0** | 6.25% | **−$1,664,000** | $12,489,600 | **+$14,153,600** |
-| 20.0 | 4.76% | −$9,684,000 | $10,980,800 | +$20,664,800 |
+| **0.5** | 66.67% | $21,594,000 | $21,602,000 | **+$8,000** |
+| 1.0 | 50.00% | $20,792,000 | $20,885,600 | +$93,600 |
+| 2.0 | 33.33% | $19,188,000 | $19,760,800 | +$572,800 |
+| 3.0 | 25.00% | $17,584,000 | $18,824,800 | +$1,240,800 |
+| 5.0 | 16.67% | $14,376,000 | $17,304,000 | +$2,928,000 |
+| **7.5** | **11.76%** | $10,366,000 | $15,832,400 | **+$5,466,400** |
+| 10.0 | 9.09% | $6,356,000 | $14,587,200 | +$8,231,200 |
+| **15.0** | 6.25% | **-$1,664,000** | $12,640,000 | **+$14,304,000** |
+| 20.0 | 4.76% | -$9,684,000 | $11,332,000 | +$21,016,000 |
+
+Corrección (2026-11-03): la versión anterior de esta tabla se calculaba con
+LightGBM (el primer modelo que `07` encontraba en disco) y con cifras de una
+ejecución anterior; afirmaba una pérdida de $13,200 a 0.5× que el modelo
+elegido no produce.
 
 ### 6.3.1 Dos conclusiones estructurales
 
-**1. Con pérdidas baratas, el modelo destruye valor.** Con $L/M = 0.5$ lo óptimo
-es conceder a todo el mundo; el modelo resta $13,200 rechazando clientes que
-habrían pagado. **Un modelo con AUC 0.87 puede ser económicamente inútil.**
+**1. Con pérdidas baratas, el modelo apenas aporta.** Con $L/M = 0.5$ casi todos
+quedan aprobados: el modelo añade $8,000 sobre 30,000 solicitudes (la regresión
+logística, -$20,000). Un AUC de 0.87 no garantiza valor económico.
 
-**2. Con pérdidas caras, el modelo es la diferencia entre existir o no.** A
-partir de $L/M \approx 15$ el negocio **pierde dinero sin modelo** (−$1.66M) y
-gana $12.5M con él.
+**2. Con pérdidas caras, el modelo es la diferencia entre ganar y perder.** A
+partir de $L/M \approx 15$ el negocio **pierde dinero sin modelo** (-$1.66M) y
+gana $12.6M con él.
 
 **[RECOM]** En crédito al consumo el ratio típico se sitúa entre 5× y 15×,
 precisamente la zona donde el modelo aporta más.
@@ -117,17 +123,20 @@ precisamente la zona donde el modelo aporta más.
 
 ## 6.4 Análisis de umbrales: el intercambio operativo
 
-**[MEDIDO]** Sobre validación (XGBoost):
+**[MEDIDO]** Sobre validación (LightGBM):
 
-| Umbral | Aprobados | Tasa aprob. | Precision | Recall | FP | FN | Beneficio |
+Precisión = morosos entre los rechazados; recall = morosos detectados sobre
+los 2,005 de validación.
+
+| Umbral | Aprobados | Tasa aprob. | Precisión | Recall | Buenos rechazados (FP) | Morosos aprobados (FN) | Beneficio |
 |---|---|---|---|---|---|---|---|
-| 0.03 | 17,267 | 57.6% | 14.1% | 89.7% | 12,733 | 206 | — |
-| 0.06 | 22,178 | 73.9% | — | — | — | 396 | $15,049,600 |
-| 0.08 | 23,938 | 79.8% | — | — | — | 528 | $15,560,000 |
-| **0.1176** | **25,859** | **86.2%** | 29.6% | 64.0% | — | **722** | **$15,777,600** |
-| 0.15 | 26,618 | 88.7% | 35.5% | 55.6% | — | 830 | $15,650,400 |
-| 0.30 | 28,275 | 94.3% | 47.2% | 38.0% | — | 1,193 | $14,507,600 |
-| 0.50 | 29,408 | 98.0% | 59.7% | 20.1% | — | 1,645 | $12,340,400 |
+| 0.03 | 17,365 | 57.9% | 14.3% | 90.2% | 10,826 | 196 | $12,559,200 |
+| 0.06 | 22,111 | 73.7% | 20.4% | 80.4% | 6,276 | 392 | $15,023,200 |
+| 0.08 | 23,819 | 79.4% | 24.3% | 74.8% | 4,681 | 505 | $15,621,200 |
+| **0.1176** | **25,868** | **86.2%** | 31.2% | 64.3% | 2,842 | **715** | **$15,832,400** |
+| 0.15 | 26,709 | 89.0% | 35.4% | 58.1% | 2,126 | 840 | $15,655,200 |
+| 0.30 | 28,231 | 94.1% | 46.3% | 40.8% | 950 | 1,186 | $14,520,000 |
+| 0.50 | 29,387 | 98.0% | 59.5% | 18.2% | 248 | 1,640 | $12,357,600 |
 
 ### 6.4.1 Lectura para cada función del banco
 
@@ -180,17 +189,17 @@ Con la política de umbral 0.1176 sobre las 30,000 solicitudes:
 
 $$\text{ECL} = \sum_{i \in \text{aprobados}} \widehat{\text{PD}}_i \times 0.60 \times \$10{,}000$$
 
-**[MEDIDO]** De los 25,859 aprobados, 722 incumplen (2.79%). Con la calibración
-verificada (error 0.34 pp), la PD media predicha del grupo aprobado es
-aproximadamente 2.8%.
+**[MEDIDO]** De los 25,868 aprobados, 715 incumplen (2.76%). La PD media
+predicha del grupo aprobado es 2.90% (LightGBM `_v1`, validación), y sumando la
+PD individual de cada aprobado:
 
-$$\text{ECL} \approx 25{,}859 \times 0.028 \times 0.60 \times \$10{,}000 \approx \$4.34\text{M}$$
+$$\text{ECL} = \sum_{i \in \text{aprobados}} \widehat{\text{PD}}_i \times 0.60 \times \$10{,}000 \approx \$4.50\text{M}$$
 
 Frente al escenario sin modelo:
 
 $$\text{ECL}_{\text{sin modelo}} = 30{,}000 \times 0.0668 \times 0.60 \times \$10{,}000 = \$12.02\text{M}$$
 
-**Reducción de ECL: ~64%.** Coherente con el 64% de morosos evitados.
+**Reducción de ECL: ~63%** (1 - 4.50/12.02). Del mismo orden que el 64% de morosos detectados al umbral 0.1176.
 
 ### 6.5.3 Los tres estadios de IFRS 9
 
@@ -265,7 +274,7 @@ Systems*, exige:
 | Backtesting periódico | ❌ no aplicable (sin datos temporales) |
 | Benchmarking contra modelo alternativo | ✅ tres modelos comparados |
 | Documentación del desarrollo | ✅ este manual |
-| Validación independiente | 🟡 auditoría interna, no de tercera línea |
+| Validación independiente | 🟡 solo revisión interna del autor, no de segunda o tercera línea |
 | Uso efectivo (*use test*) | ❌ no desplegado |
 
 **[RECOM]** La ausencia de validación *out-of-time* es la brecha más grave desde
@@ -337,10 +346,10 @@ capacidad de reproceso completo del portafolio en minutos.
 
 | Banda | n | % población | Tasa de evento | Política sugerida [RECOM] |
 |---|---|---|---|---|
-| < 500 | 944 | 3.1% | **54.98%** | Rechazo automático |
-| 500 – 550 | 3,331 | 11.1% | 21.98% | Rechazo / revisión manual |
-| 550 – 600 | 14,785 | 49.3% | 4.53% | Aprobación con precio ajustado |
-| 600 – 650 | 10,940 | 36.5% | **0.77%** | Aprobación preferente |
+| < 500 | 938 | 3.1% | **55.01%** | Rechazo automático |
+| 500 – 550 | 3,354 | 11.2% | 22.09% | Rechazo / revisión manual |
+| 550 – 600 | 14,792 | 49.3% | 4.48% | Aprobación con precio ajustado |
+| 600 – 650 | 10,916 | 36.4% | **0.78%** | Aprobación preferente |
 
 Umbral de negocio (PD < 11.76%) = **545 puntos**; se aprobaría al 88.2%.
 
@@ -359,7 +368,7 @@ del segmento 500–550 con precio adecuado en lugar de rechazarlo.
 | Poder discriminante (AUC 0.866, Gini 0.737, KS 0.587) | ✅ competitivo |
 | Calibración (0.34 pp) | ✅ apto para decisiones basadas en PD |
 | Reproducibilidad | ✅ verificada desde cero |
-| Explicabilidad individual (scorecard + SHAP) | ✅ scorecard coherente tras H1; SHAP para el modelo desplegado |
+| Explicabilidad individual (scorecard + SHAP) | ✅ scorecard coherente tras H1; SHAP para el modelo elegido |
 | Artefactos versionados y emparejados | ✅ |
 | Traducción económica documentada | ✅ |
 
@@ -394,4 +403,4 @@ que este conjunto no posee — es un cambio de alcance, no una corrección.
 
 ---
 
-[← Experimentos](05_experimentos.md) · [Índice](README.md) · [Siguiente: Auditoría →](07_auditoria.md)
+[← Experimentos](05_experimentos.md) · [Índice](README.md) · [Siguiente: Revisión técnica →](07_auditoria.md)

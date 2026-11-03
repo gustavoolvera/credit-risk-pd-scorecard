@@ -125,11 +125,14 @@ se le entregan al modelo variables ya expresadas en su propia escala natural.
 **[IMPL]** Si $n_{0j}=0$ o $n_{1j}=0$, el WoE diverge. La implementación aplica
 una corrección aditiva con $\alpha = 0.5$:
 
-$$\widehat{\text{WoE}}_j = \ln\!\left(\frac{(n_{0j} + \alpha)/N_0}{(n_{1j} + \alpha)/N_1}\right), \qquad \alpha = 0.5$$
+$$\widehat{\text{WoE}}_j = \ln\!\left(\frac{(n_{0j} + \alpha)/(N_0 + \alpha J)}{(n_{1j} + \alpha)/(N_1 + \alpha J)}\right), \qquad \alpha = 0.5$$
+
+donde $J$ es el número de intervalos de la variable.
 
 ```python
-g["dist_eventos"]    = (g["eventos"]    + suavizado) / total_eventos
-g["dist_no_eventos"] = (g["no_eventos"] + suavizado) / total_no_eventos
+k = len(g)
+g["dist_eventos"]    = (g["eventos"]    + suavizado) / (total_eventos    + suavizado * k)
+g["dist_no_eventos"] = (g["no_eventos"] + suavizado) / (total_no_eventos + suavizado * k)
 g["woe"] = np.log(g["dist_no_eventos"] / g["dist_eventos"])
 ```
 
@@ -137,10 +140,13 @@ $\alpha = 0.5$ corresponde al *prior* de Jeffreys para la binomial
 $\text{Beta}(1/2, 1/2)$ **[TEORÍA]**. Alternativas: $\alpha=1$ (Laplace clásico,
 más conservador) o suavizado proporcional al tamaño del bin.
 
-**Nota de precisión [IMPL]:** los denominadores $N_0, N_1$ no se corrigen, luego
-$\sum_j \widehat{P}_j$ excede ligeramente 1. El sesgo es de orden
-$J\alpha/N \approx 5 \times 10^{-5}$ con $J{=}10$ y $N{=}10^5$ — despreciable,
-pero es una desviación de la forma canónica.
+**Normalización [IMPL]:** el suavizado se suma también a los denominadores
+($+\alpha J$), de modo que $\sum_j \widehat{P}_{0j} = \sum_j \widehat{P}_{1j} = 1$
+exactamente y el IV es una divergencia entre dos distribuciones de probabilidad
+genuinas. Hasta 2026-11-01 los denominadores eran $N_0, N_1$ sin corregir (las
+proporciones sumaban ≈1.0003); el cambio desplaza el WoE de cada variable en una
+constante de orden $10^{-4}$ que absorbe el intercepto. Detalle y verificación
+en [04 §4.8](04_modelado.md#48-cambio-2026-11-01-woe-normalizado-y-tolerancia-del-optimizador).
 
 ### 2.2.4 Ventajas del WoE frente a alternativas
 
@@ -280,7 +286,7 @@ $$\boxed{\ \ell(\boldsymbol{\beta}) = -\sum_{k=1}^{n}\Big[y_k \ln p_k + (1-y_k)\
 
 $$\frac{\partial \ell}{\partial \beta_i} = \sum_{k=1}^{n}\left(p_k - y_k\right)x_{ki}$$
 
-El gradiente tiene la forma elegante *(predicción − realidad) × característica*.
+El gradiente tiene la forma elegante *(predicción - realidad) × característica*.
 
 **Matriz Hessiana:**
 
@@ -520,7 +526,7 @@ distintas.
 $$\text{Gini} = 2\,\text{AUC} - 1$$
 
 Convención bancaria. Contiene exactamente la misma información. **[MEDIDO]**
-Gini $= 0.7374$ para el modelo desplegado.
+Gini en validación: 0.7381 (LightGBM, el modelo elegido) y 0.7371 (XGBoost).
 
 ### 2.7.5 Estadístico KS
 
@@ -573,20 +579,19 @@ media predicha contra la frecuencia observada:
 
 $$\text{ECE} = \frac{1}{J}\sum_{j=1}^{J}\left|\bar{p}_j - \bar{y}_j\right| \times 100 \quad [\text{puntos porcentuales}]$$
 
-**[MEDIDO]** Modelo desplegado (XGBoost):
+**[MEDIDO]** XGBoost, validación:
 
 | Decil | PD predicha | PD observada | Error |
 |---|---|---|---|
-| 0 | 0.57% | 0.47% | +0.10 |
-| 5 | 2.69% | 2.17% | +0.52 |
-| 8 | 11.37% | 11.80% | −0.43 |
-| 9 | **36.51%** | **37.20%** | −0.69 |
+| 0 | 0.61% | 0.40% | +0.21 |
+| 5 | 2.73% | 2.47% | +0.26 |
+| 8 | 11.35% | 12.30% | -0.95 |
+| 9 | **36.26%** | **36.93%** | -0.67 |
 
-Error absoluto medio: **0.34 pp**. El decil 9 —donde se concentra la decisión de
-mayor impacto económico— es el más preciso.
+Error absoluto medio: **0.35 pp** (LightGBM: 0.36 pp).
 
-**Observación contraintuitiva [MEDIDO]:** XGBoost calibra mejor (0.34 pp) que la
-regresión logística (0.53 pp), pese a que ésta optimiza directamente la
+**Observación contraintuitiva [MEDIDO]:** XGBoost calibra mejor (0.35 pp) que la
+regresión logística (0.73 pp), pese a que ésta optimiza directamente la
 verosimilitud. Con $n$ grande y `logloss` como objetivo, el *boosting* alcanza
 buena calibración sin necesitar recalibrado posterior (Platt scaling, isotónica).
 
@@ -630,29 +635,33 @@ $O(TLD^2)$ para ensambles de árboles, en lugar del $O(2^p)$ del cálculo direct
 
 ### 2.9.2 Verificación empírica de la aditividad [MEDIDO]
 
+Ejemplo con XGBoost (`experiments/shap_xgboost/`); `06` verifica lo mismo para
+LightGBM, el modelo elegido.
+
 ```
-Cliente #22556 — PD 89.4%
-  base (log-odds medio de la población)          −2.6612
-  RevolvingUtilization = 1.07                    +1.1184
-  peor_atraso = 3                                +1.0523
-  total_atrasos = 9                              +0.9926
+Cliente #22556 — XGBoost, PD 86.6%
+  base (log-odds medio de la población)          -2.6593
+  RevolvingUtilization = 1.07                    +1.0746
+  total_atrasos = 9                              +0.8664
+  peor_atraso = 3                                +0.7426
   ...                                            ───────
-  suma = +2.1341   →   σ(2.1341) = 89.4%  ✓
+  suma = +1.8659   →   σ(1.8659) = 86.6%  ✓
 ```
 
 La reconciliación es exacta, como garantiza la propiedad de eficiencia.
 
 ### 2.9.3 SHAP frente a `feature_importances_`
 
-**[MEDIDO]** Sobre los mismos datos:
+**[MEDIDO]** Mismo modelo (`xgboost_v1`), mismos datos (`experiments/shap_xgboost/`):
 
-| Variable | `feature_importances_` (XGBoost) | SHAP |
+| Variable | `feature_importances_` (gain) | SHAP medio |
 |---|---|---|
-| `RevolvingUtilization` | **4.7%** | **30.91%** |
-| `peor_atraso` | 34.2% | 31.94% |
-| `flag_algun_atraso` | 27.8% | 4.48% |
+| `RevolvingUtilization` | **4.3%** | **30.5%** |
+| `peor_atraso` | 25.7% | 9.5% |
+| `flag_algun_atraso` | 38.9% | 6.9% |
 
-Discrepancia de un factor 6.6× en `RevolvingUtilization`.
+Discrepancia de un factor 7× en `RevolvingUtilization`. (Versiones anteriores de
+esta tabla mezclaban el gain de XGBoost con el SHAP de LightGBM.)
 
 **Explicación [TEORÍA]:** `feature_importances_` con `importance_type="gain"`
 acumula la reducción de pérdida en las divisiones donde se usó la variable.
@@ -693,13 +702,15 @@ punto de corte sin necesidad de buscarlo.
 Buscar el umbral en el mismo conjunto donde se reporta el beneficio es
 sobreajustar. Partiendo validación en dos mitades:
 
-| Umbral | Origen | Beneficio en la mitad B (no vista) |
-|---|---|---|
-| 0.1184 | hallado empíricamente en la mitad A | $7,993,200 |
-| **0.1176** | **fórmula $M/(M+L)$** | **$8,006,000** |
+| Modelo | Umbral empírico (mitad A) | Beneficio en B: empírico | Beneficio en B: fórmula |
+|---|---|---|---|
+| XGBoost | 0.1244 | $7,937,600 | **$7,959,600** |
+| LogReg | 0.0985 | $7,832,400 | **$7,901,600** |
+| LightGBM | 0.1184 | **$7,958,000** | $7,952,800 |
 
-La fórmula supera al umbral ajustado a los datos. **El umbral se deriva, no se
-aprende.**
+El umbral ajustado no mejora de forma consistente a la fórmula (gana esta en 2
+de 3 modelos). Con una sola partición no se puede afirmar más; la fórmula se
+prefiere porque no depende de la muestra. Detalle en [E12](05_experimentos.md#e12--debe-buscarse-el-umbral-en-los-datos).
 
 ### 2.10.3 Relación con la teoría de decisión bayesiana
 
@@ -790,8 +801,8 @@ $$\text{significativo si} \quad |\bar d| > 2\,\frac{s_d}{\sqrt{K}}$$
 
 | Comparación | $\bar d$ | Veredicto |
 |---|---|---|
-| LogReg vs XGBoost | −0.00685 | **real** |
-| LogReg vs LightGBM | −0.00640 | **real** |
+| LogReg vs XGBoost | -0.00685 | **real** |
+| LogReg vs LightGBM | -0.00640 | **real** |
 | XGBoost vs LightGBM | +0.00045 | **dentro del ruido** |
 
 **[RECOM]** El emparejamiento reduce sustancialmente la varianza frente a un
@@ -804,16 +815,18 @@ intrínseca de cada fold. Es la elección correcta cuando los folds coinciden.
 entrenamiento que después aparece en los folds de test de la CV. Eso induciría
 optimismo.
 
-**[MEDIDO]** Repitiendo toda la selección dentro de cada fold externo:
+**[MEDIDO]** Repitiendo toda la selección dentro de cada fold externo
+(`experiments/cv_anidada/`):
 
-| | Media | Desv. |
+| | Media | Desv. (`ddof=0`) |
 |---|---|---|
 | CV reportada | 0.86628 | 0.00306 |
-| **Nested CV** | **0.86661** | 0.00337 |
+| **CV anidada** | **0.86647** | 0.00323 |
 
-Diferencia: −0.00028. **El sesgo no es detectable.** La rejilla es pequeña (11
-configuraciones) y el conjunto grande, lo que limita la capacidad de sobreajuste
-por selección.
+Diferencia +0.00018, IC 95 % (Nadeau–Bengio) [-0.00084, +0.00120]. **No se
+detecta optimismo**; el IC lo acota por debajo de ~0.001 de AUC. La
+configuración elegida cambia entre folds: el AUC es casi plano en la rejilla.
+Detalle en [E11](05_experimentos.md#e11--validación-cruzada-anidada).
 
 ---
 

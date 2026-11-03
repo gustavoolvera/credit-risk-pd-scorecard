@@ -1,6 +1,6 @@
 # 08 — Comparación metodológica
 
-[← Auditoría](07_auditoria.md) · [Índice](README.md) · [Siguiente: Guía del desarrollador →](09_guia_desarrollador.md)
+[← Revisión técnica](07_auditoria.md) · [Índice](README.md) · [Siguiente: Guía del desarrollador →](09_guia_desarrollador.md)
 
 ---
 
@@ -130,7 +130,7 @@ Elastic Net con restricción de signo (disponible en `scikit-learn` vía
 | Método | Efecto en AUC | Efecto en calibración | Veredicto |
 |---|---|---|---|
 | **Nada + umbral económico (implementado)** | Referencia | **Preservada** (PD media 6.68% = real) | ✅ |
-| `class_weight='balanced'` | −0.0008 **[MEDIDO]** | **Destruida** (PD media 33.48%) | ❌ |
+| `class_weight='balanced'` | -0.0008 **[MEDIDO]** | **Destruida** (PD media 33.48%) | ❌ |
 | SMOTE | Variable | Distorsionada | ❌ para PD |
 | Submuestreo de la mayoría | Similar, más varianza | Distorsionada (recalibrable) | 🟡 |
 | Aprendizaje sensible al coste | Similar | Depende de la implementación | 🟡 |
@@ -157,10 +157,10 @@ informativos.
 | SVM | Inferior con $n$ grande | Baja | No usada |
 
 **[TEORÍA]** La literatura de benchmarking (Lessmann et al., 2015, *European
-Journal of Operational Research*) sobre 41 conjuntos de credit scoring encuentra
-que los métodos de ensamble superan consistentemente a la regresión logística,
-pero **con márgenes modestos**. Este proyecto reproduce ese resultado: +0.0069 de
-AUC.
+Journal of Operational Research*), con 41 clasificadores sobre 8 conjuntos de
+credit scoring, encuentra que varios métodos, entre ellos los ensambles,
+superan a la regresión logística. Aquí la ventaja es modesta: +0.0083 de AUC en
+la CV pareada ([04 §4.7.1](04_modelado.md#471-incertidumbre-de-la-comparación-diferencias-pareadas)).
 
 **Veredicto [RECOM]:** entrenar las tres familias y compararlas con validación
 cruzada es la práctica correcta. La conclusión —el *booster* gana de forma
@@ -183,7 +183,7 @@ frecuentemente se resuelve a favor de la interpretabilidad.
 | Partial Dependence Plots | Efecto marginal medio | Medio | Sesgado con predictores correlacionados |
 | Counterfactual explanations | — | Alto | Útil para explicar al cliente |
 
-**Veredicto [RECOM]:** correcta. Usar SHAP para el modelo desplegado y el
+**Veredicto [RECOM]:** correcta. Usar SHAP para el modelo elegido y el
 scorecard para el lineal cubre ambos casos con métodos de fidelidad exacta.
 
 **[RECOM]** Las *explicaciones contrafactuales* ("con un score 30 puntos mayor
@@ -218,7 +218,7 @@ modelo de crédito.
 |---|---|---|---|
 | **$M/(M+L)$ (implementado)** | Teoría de decisión bayesiana | Óptimo demostrable; **no requiere datos** | Depende de estimar $M$ y $L$ |
 | Maximizar F1 | Equilibrio precision/recall | Automático | Ignora la asimetría económica |
-| Índice de Youden ($\max$ TPR−FPR) | Punto de máximo KS | Simple | Supone costes simétricos |
+| Índice de Youden ($\max$ TPR-FPR) | Punto de máximo KS | Simple | Supone costes simétricos |
 | Barrido empírico sobre validación | Directo | Aparentemente óptimo | **Sobreajusta** — demostrado en [E12](05_experimentos.md#e12--debe-buscarse-el-umbral-en-los-datos) |
 | Fijar tasa de aprobación objetivo | Restricción operativa | Alineado con el plan comercial | No optimiza beneficio |
 
@@ -250,4 +250,4 @@ reproducibilidad.
 
 ---
 
-[← Auditoría](07_auditoria.md) · [Índice](README.md) · [Siguiente: Guía del desarrollador →](09_guia_desarrollador.md)
+[← Revisión técnica](07_auditoria.md) · [Índice](README.md) · [Siguiente: Guía del desarrollador →](09_guia_desarrollador.md)

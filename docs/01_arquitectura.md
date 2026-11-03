@@ -44,12 +44,15 @@ Probability_of_Default/
 │   ├── __init__.py              (vacío — marca el paquete)
 │   ├── preprocessing.py         Limpieza por reglas + ingeniería de variables
 │   ├── woe.py                   Weight of Evidence e Information Value
-│   ├── evaluation.py            Métricas, calibración, regla de negocio
-│   └── artifacts.py             Persistencia y aplicación de transformadores
+│   ├── evaluation.py            Métricas, calibración, regla de negocio, comparación pareada
+│   ├── seleccion.py             CV en train y regla de elección del modelo final
+│   └── artifacts.py             Persistencia de transformadores, rutas de datos, JSON
 │
 ├── tests/
-│   ├── test_preprocessing.py    19 pruebas de invariantes del pipeline
-│   └── test_evaluation.py       29 pruebas de métricas y regla de negocio
+│   ├── test_preprocessing.py    invariantes del pipeline
+│   ├── test_woe.py              WoE, IV y auditor de binning
+│   ├── test_evaluation.py       métricas, regla de negocio, comparación pareada
+│   └── test_seleccion.py        regla de elección del modelo
 │
 ├── docs/                        Este manual
 │
@@ -127,6 +130,7 @@ esté aguas abajo.
 |---|---|
 | `src/preprocessing.py` o `src/woe.py` | 02 → 03 → 04 → 05 → 06 → 07 → 08 |
 | `src/evaluation.py` | 03, 06, 07, 08 (y `pytest`) |
+| `src/seleccion.py` | 06 → 07 (y `pytest`) |
 | `03_train_logistic.py` | 03 → 05 (usa el modelo para la CV) → 06 → 07 → 08 |
 | `04` o `05` | ese script → 06 → 07 |
 | Supuestos económicos (`MARGEN`, `LGD`) | 06 (usa `UMBRAL_NEGOCIO`), 07, 08 |
@@ -142,7 +146,7 @@ deliberado —permite usar particiones idénticas para los tres— pero implica 
 
 ## 1.4 Módulos de la biblioteca (`src/`)
 
-### 1.4.1 `src/preprocessing.py` — 245 líneas
+### 1.4.1 `src/preprocessing.py`
 
 Limpieza determinista por reglas e ingeniería de variables. **No aprende nada de
 los datos**, luego puede aplicarse a cualquier conjunto sin riesgo de fuga.
@@ -245,7 +249,7 @@ espacio de cortes posibles sin aportar nada.
 
 ---
 
-### 1.4.2 `src/woe.py` — 199 líneas
+### 1.4.2 `src/woe.py`
 
 Codificación Weight of Evidence e Information Value. Solo la usa la rama de
 regresión logística.
@@ -289,7 +293,7 @@ entrenamiento. La matemática está en el
 
 ---
 
-### 1.4.3 `src/evaluation.py` — 165 líneas
+### 1.4.3 `src/evaluation.py`
 
 Métricas y regla de negocio. Extraído de los scripts para hacerlo comprobable.
 
@@ -300,7 +304,7 @@ Métricas y regla de negocio. Extraído de los scripts para hacerlo comprobable.
 | `tabla_calibracion(y, p, n_grupos=10)` | DataFrame por decil | 1 prueba |
 | `error_calibracion(y, p, n_grupos=10)` | Error medio en puntos porcentuales | 2 pruebas |
 | `signos_invertidos(coefs, cols, prefijo_woe="woe_")` | Variables WoE con signo incorrecto (versión débil, conservada por compatibilidad) | 3 pruebas |
-| `direccion_univariada(X, y, columna)` | +1 / −1 / 0 según cómo mueve el riesgo la variable, medido sin modelo | 2 pruebas |
+| `direccion_univariada(X, y, columna)` | +1 / -1 / 0 según cómo mueve el riesgo la variable, medido sin modelo | 2 pruebas |
 | `signos_incoherentes(coefs, cols, X_train, y_train)` | **Comprobación completa**: variables WoE por convención de signo e indicadores contra su dirección univariada | 4 pruebas |
 | `umbral_optimo(margen, perdida)` | $M/(M+L)$ | 4 pruebas |
 | `beneficio(p, y, umbral, margen, perdida)` | dict con conteos y beneficio | 4 pruebas |
@@ -319,7 +323,7 @@ sus pruebas documentan la convención de signo del WoE.
 
 ---
 
-### 1.4.4 `src/artifacts.py` — 136 líneas
+### 1.4.4 `src/artifacts.py`
 
 Persistencia del transformador entrenado.
 
@@ -370,7 +374,7 @@ cubierto por `test_artefacto_detecta_pipeline_desincronizado`.
 
 ## 1.5 Scripts orquestadores
 
-### `01_eda.py` — 421 líneas
+### `01_eda.py`
 
 Ocho secciones: carga, objetivo, descriptivos, faltantes, valores sospechosos,
 relación variable–objetivo por deciles, correlaciones, gráficas.
@@ -383,7 +387,7 @@ vacío— solo son visibles con el rango completo.
 
 Salidas: `outputs/01_balance_target.png` … `05_colas_completas.png`.
 
-### `02_preprocessing.py` — 272 líneas
+### `02_preprocessing.py`
 
 Orquestador del preprocesamiento. Constantes: `SEMILLA = 42`,
 `PCT_VALIDACION = 0.20`, `ID = "row_id"`.
@@ -395,7 +399,7 @@ Las verificaciones incluyen una prueba de ida y vuelta: recargar el artefacto
 desde disco y aplicarlo a datos crudos debe reproducir exactamente el
 `.parquet` guardado.
 
-### `03_train_logistic.py` — 528 líneas
+### `03_train_logistic.py`
 
 Nueve pasos: carga → VIF → selección de subconjunto → modelo final →
 evaluación → coeficientes → **diagnósticos** → gráficas → guardado.
@@ -403,44 +407,46 @@ evaluación → coeficientes → **diagnósticos** → gráficas → guardado.
 Sub-partición interna: 96,000 ajuste / 24,000 selección. La validación no
 participa en ninguna decisión.
 
-### `04_train_xgboost.py` — 442 líneas
+### `04_train_xgboost.py`
 
 Diez pasos, incluidos *early stopping* con conjunto propio y búsqueda sobre
 11 configuraciones.
 
-### `05_train_lightgbm.py` — 421 líneas
+### `05_train_lightgbm.py`
 
 Ocho pasos. Además de entrenar, ejecuta la **comparación por validación cruzada
 de los tres modelos** con particiones idénticas y contraste emparejado.
 
-### `06_evaluation.py` — 494 líneas
+### `06_evaluation.py`
 
 Comparación multi-criterio → SHAP → elección → reentrenamiento con 150,000
 filas → submission → 8 verificaciones.
 
-### `07_business_evaluation.py` — 249 líneas
+### `07_business_evaluation.py`
 
 Traducción a unidades monetarias y análisis de sensibilidad al ratio
 pérdida/ganancia. Detecta automáticamente todos los modelos en
 `artifacts/models/`.
 
-### `08_scorecard.py` — 335 líneas
+### `08_scorecard.py`
 
 Construcción de la tabla de puntos, verificación de reconciliación exacta,
 explicación individual y bandas de riesgo.
 
-### `predict.py` — 189 líneas
+### `predict.py`
 
 Interfaz de línea de comandos para inferencia. Único script con `argparse`.
 
 ```bash
-python predict.py --demo
+python predict.py --demo                       # modelo final elegido en 06
 python predict.py --entrada nuevos.csv --modelo logistic_v1 --salida out.csv
 python predict.py --entrada nuevos.csv --margen 800 --perdida 20000
 ```
 
-Prefiere `preprocessor_final.joblib` (emparejado con el modelo reentrenado) y
-recurre a `preprocessor_v1.joblib` si aquel no existe.
+Modelo y preprocesador van siempre emparejados: por defecto usa el modelo final
+de `06` (`artifacts/models/final/`, 150,000 filas) con `preprocessor_final.joblib`;
+con `--modelo <x>_v1` usa ese modelo (120,000 filas) con `preprocessor_v1.joblib`.
+Ver [04 §4.7.3](04_modelado.md#473-modelo-de-producción-artefactos-e-inferencia).
 
 ---
 

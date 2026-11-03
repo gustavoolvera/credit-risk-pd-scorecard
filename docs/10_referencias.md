@@ -4,20 +4,27 @@
 
 ---
 
-## 10.1 Aviso sobre la verificación de fuentes
+## 10.1 Verificación de las fuentes
 
-**Declaración de transparencia.** Las referencias de esta sección se citan de
-memoria del autor de la documentación y **no han sido verificadas contra las
-publicaciones originales durante la redacción de este manual**. Los datos
-bibliográficos (año, volumen, páginas) deben confirmarse antes de cualquier uso
-formal —una tesis, un informe de validación regulatoria o una publicación—.
+Revisión del 2026-11-03:
 
-Las afirmaciones etiquetadas **[MEDIDO]** a lo largo del manual **sí** están
-verificadas: proceden de ejecuciones del código de este repositorio y son
-reproducibles con los scripts incluidos.
+- **Verificadas contra la editorial, el DOI o un repositorio institucional**
+  (autores, año, revista, volumen y páginas): Baesens et al. (2003), Lessmann et
+  al. (2015), Lundberg et al. (2020), Micci-Barreca (2001), Navas-Palencia
+  (2020), Saito & Rehmsmeier (2015), Varma & Simon (2006), Cawley & Talbot
+  (2010), Nadeau & Bengio (2003), Bouckaert & Frank (2004), Murphy (1973) y los
+  §452 (definición de default) y §272 (fórmula IRB corporativa) de Basilea II.
+- **No verificadas una a una:** el resto son textos de referencia, artículos
+  fundacionales y normativa ampliamente citados (Friedman, Chen & Guestrin, Ke
+  et al., Shapley, Lundberg & Lee, Fayyad & Irani, Hanley & McNeil,
+  Niculescu-Mizil & Caruana, Siddiqi, Thomas et al., Hastie et al., Hosmer et
+  al., Little & Rubin, Holm, BCBS, IASB, SR 11-7, Regulation B). Conviene
+  confirmar sus datos bibliográficos antes de un uso formal.
+- **Corregido:** Lessmann et al. (2015) comparan 41 clasificadores sobre 8
+  conjuntos de datos; una versión anterior decía "41 conjuntos".
 
-Esta distinción es deliberada. Confundir "lo he leído" con "lo he comprobado" es
-una fuente habitual de error en informes técnicos.
+Las afirmaciones **[MEDIDO]** proceden de ejecuciones del código de este
+repositorio y se regeneran con los scripts incluidos.
 
 ---
 
@@ -106,9 +113,9 @@ una fuente habitual de error en informes técnicos.
 
 - **Lessmann, S., Baesens, B., Seow, H.-V. & Thomas, L. C.** (2015).
   *Benchmarking State-of-the-Art Classification Algorithms for Credit Scoring: An
-  Update of Research*. European Journal of Operational Research, 247(1).
-  → Comparación sobre 41 conjuntos: los ensambles superan a la regresión
-  logística con márgenes modestos. Contexto de
+  Update of Research*. European Journal of Operational Research, 247(1), 124–136.
+  → 41 clasificadores sobre 8 conjuntos de datos de credit scoring: varios
+  métodos, entre ellos ensambles, superan a la regresión logística. Contexto de
   [§8.7](08_comparacion_metodologica.md#87-elección-de-la-familia-de-modelos).
 
 - **Baesens, B. et al.** (2003). *Benchmarking State-of-the-Art Classification
@@ -177,6 +184,25 @@ una fuente habitual de error en informes técnicos.
   Selection and Subsequent Selection Bias in Performance Evaluation*. JMLR, 11.
   → Sesgo por selección; fundamento de apartar un conjunto de selección
   independiente de validación.
+
+- **Nadeau, C. & Bengio, Y.** (2003). *Inference for the Generalization Error*.
+  Machine Learning, 52(3), 239–281.
+  → Varianza corregida para comparar modelos con remuestreo
+  ([04 §4.7.1](04_modelado.md#471-incertidumbre-de-la-comparación-diferencias-pareadas), E11, E17, E19).
+
+- **Bouckaert, R. R. & Frank, E.** (2004). *Evaluating the Replicability of
+  Significance Tests for Comparing Learning Algorithms*. PAKDD 2004, LNCS 3056,
+  3–12.
+  → Aplicación de la corrección anterior a la validación cruzada k-fold
+  repetida.
+
+- **Holm, S.** (1979). *A Simple Sequentially Rejective Multiple Test
+  Procedure*. Scandinavian Journal of Statistics, 6(2), 65–70.
+  → Corrección por comparaciones múltiples (E17).
+
+- **Murphy, A. H.** (1973). *A New Vector Partition of the Probability Score*.
+  Journal of Applied Meteorology, 12(4), 595–600.
+  → Descomposición del Brier Score en fiabilidad, resolución e incertidumbre.
 
 ---
 

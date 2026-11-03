@@ -28,7 +28,7 @@ solo esta carpeta.
 | [04 — Modelado](04_modelado.md) | Las tres familias de modelos, cada hiperparámetro y su justificación. | ML engineer |
 | [05 — Experimentos](05_experimentos.md) | Todo experimento ejecutado, con objetivo, método, resultado e interpretación. | Investigador, validador |
 | [06 — Negocio y regulación](06_negocio_y_regulacion.md) | Traducción a dólares, ECL, Basilea II/III, IFRS 9, capital, umbrales. | Riesgos, negocio, regulatorio |
-| [07 — Auditoría técnica](07_auditoria.md) | Revisión crítica independiente. Defectos detectados, causa, impacto y corrección. | Validación de modelos |
+| [07 — Revisión técnica interna](07_auditoria.md) | Revisión crítica hecha por el propio autor (no es una validación independiente). Defectos detectados, causa, impacto y corrección. | Validación de modelos |
 | [08 — Comparación metodológica](08_comparacion_metodologica.md) | El enfoque implementado frente a las alternativas de academia e industria. | Investigador, arquitecto |
 | [09 — Guía del desarrollador](09_guia_desarrollador.md) | Instalación, ejecución, extensión, depuración, errores comunes. | Cualquier desarrollador |
 | [10 — Referencias](10_referencias.md) | Fuentes, y separación explícita entre teoría establecida, detalles de implementación y recomendaciones propias. | Todos |
@@ -51,13 +51,16 @@ Y = \mathbb{1}\{\text{mora de 90+ días en } (t_0,\, t_0 + 24\text{ meses}]\}$$
 
 | Modelo | ROC-AUC (CV, 5 particiones) | KS | Error de calibración | Valor económico |
 |---|---|---|---|---|
-| Regresión logística (WoE, 10 vars) | 0.85794 ± 0.00359 | 0.5720 | 0.72 pp | $172.59 / solicitud |
-| **XGBoost** ← desplegado | **0.86628 ± 0.00306** | **0.5832** | **0.35 pp** | $180.37 / solicitud |
-| LightGBM | 0.86619 ± 0.00343 | 0.5885 | 0.36 pp | $182.21 / solicitud |
+| Regresión logística (WoE, 10 vars) | 0.85794 ± 0.00359 | 0.5722 | 0.73 pp | $173.21 / solicitud |
+| XGBoost | 0.86628 ± 0.00306 | 0.5832 | 0.35 pp | $180.37 / solicitud |
+| **LightGBM** ← elegido | 0.86619 ± 0.00343 | 0.5885 | 0.36 pp | $182.21 / solicitud |
 
-Contraste emparejado fold a fold: ambos *boosters* superan a la regresión
-logística de forma estadísticamente consistente; entre ellos la diferencia
-(+0.00009) queda dentro del ruido de muestreo.
+AUC: media ± desviación estándar de los 5 folds (`ddof=0`), no un intervalo de
+confianza. Contraste emparejado fold a fold con IC 95 % corregido de
+Nadeau–Bengio: ambos *boosters* superan a la regresión logística (+0.0083,
+IC [+0.006, +0.011]). Entre ellos la diferencia es +0.00009, IC
+[-0.0011, +0.0013]: no se detecta diferencia, lo que no equivale a demostrar
+que sean equivalentes. Detalle en [04 §4.7.1](04_modelado.md#471-incertidumbre-de-la-comparación-diferencias-pareadas).
 
 ### Estado de validación
 
@@ -65,9 +68,9 @@ logística de forma estadísticamente consistente; entre ellos la diferencia
 |---|---|
 | Reproducibilidad desde cero | ✅ 12/12 métricas idénticas byte a byte tras borrar y reconstruir |
 | Fuga de datos en los datos | ✅ correlación máxima con el objetivo 0.3916; objetivo ausente de las features |
-| Fuga de datos en el proceso | ✅ validación nunca participa en decisiones; verificado con *nested CV* |
+| Fuga de datos en el proceso | ✅ variables e hiperparámetros se eligen sin validación; CV anidada sin optimismo detectable. 🟡 La elección final entre modelos sí usa validación (declarado, [04 §4.7.2](04_modelado.md#472-uso-de-validación-en-la-elección-del-modelo)) |
 | Determinismo | ✅ entrenamientos repetidos dan coeficientes y predicciones idénticos |
-| Cobertura de pruebas | 🟡 48 pruebas sobre `src/`; los scripts se validan por invariantes internos |
+| Cobertura de pruebas | 🟡 106 pruebas sobre `src/`; los scripts se validan por invariantes internos |
 | Interpretabilidad del scorecard | ✅ **corregido** — 0 incoherencias, VIF máx 1.3 (ver [H1](07_auditoria.md#h1)) |
 | Validación *out-of-time* | ❌ **no realizada** — requisito bajo Basilea/IFRS 9 (ver [capítulo 07](07_auditoria.md#h2)) |
 | *Reject inference* | ❌ no abordado (limitación estructural del conjunto de datos) |
