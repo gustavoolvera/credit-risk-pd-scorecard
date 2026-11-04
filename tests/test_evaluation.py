@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-test_evaluation.py — Pruebas de las metricas y la regla de negocio
+test_evaluation.py: Pruebas de las metricas y la regla de negocio
 
 Se ejecuta con:  pytest tests/ -v
 
@@ -275,7 +275,7 @@ def test_direccion_univariada_devuelve_cero_si_el_grupo_esta_vacio():
 def test_detecta_flag_que_contradice_su_direccion(datos_flags):
     """
     EL CASO DE H1: flag_peligroso marca un grupo con 50% de eventos frente
-    al 5% del resto, pero su coeficiente es NEGATIVO — es decir, en el
+    al 5% del resto, pero su coeficiente es NEGATIVO: es decir, en el
     scorecard le sumaria puntos a favor. Indefendible.
     """
     X, y = datos_flags

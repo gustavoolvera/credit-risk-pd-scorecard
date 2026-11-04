@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-01_eda.py — Analisis Exploratorio de Datos (EDA)
-Proyecto: Give Me Some Credit — Probability of Default
+01_eda.py: Analisis Exploratorio de Datos (EDA)
+Proyecto: Give Me Some Credit: Probability of Default
 
 Objetivo de este script: ENTENDER los datos antes de tocarlos.
 No limpiamos nada aqui, solo miramos y diagnosticamos.
@@ -58,7 +58,7 @@ sns.set_theme(style="whitegrid")
 
 
 # =============================================================================
-# PARTE 0 — RUTAS
+# PARTE 0: RUTAS
 # =============================================================================
 # Path(__file__) = la ruta de ESTE archivo. .parent = la carpeta que lo contiene.
 # Usamos rutas relativas para que el script funcione en cualquier computadora.
@@ -86,9 +86,9 @@ def titulo(texto):
 
 
 # =============================================================================
-# PARTE 1 — CARGA Y VISTAZO GENERAL
+# PARTE 1: CARGA Y VISTAZO GENERAL
 # =============================================================================
-titulo("PARTE 1 — CARGA Y VISTAZO GENERAL")
+titulo("PARTE 1: CARGA Y VISTAZO GENERAL")
 
 # index_col=0 -> la primera columna del CSV es solo un numero de fila, no un dato.
 # Le decimos a pandas que la use como indice en vez de tratarla como variable.
@@ -140,9 +140,9 @@ print(train.dtypes)
 
 
 # =============================================================================
-# PARTE 2 — LA VARIABLE OBJETIVO (el "target")
+# PARTE 2: LA VARIABLE OBJETIVO (el "target")
 # =============================================================================
-titulo("PARTE 2 — LA VARIABLE OBJETIVO: SeriousDlqin2yrs")
+titulo("PARTE 2: LA VARIABLE OBJETIVO: SeriousDlqin2yrs")
 
 # value_counts() cuenta cuantas veces aparece cada valor.
 # normalize=True lo convierte en proporcion (0 a 1) en vez de conteo.
@@ -162,9 +162,9 @@ print(f"Ratio de desbalance: 1 default por cada {(1-tasa_default)/tasa_default:.
 
 
 # =============================================================================
-# PARTE 3 — ESTADISTICOS DESCRIPTIVOS
+# PARTE 3: ESTADISTICOS DESCRIPTIVOS
 # =============================================================================
-titulo("PARTE 3 — ESTADISTICOS DESCRIPTIVOS")
+titulo("PARTE 3: ESTADISTICOS DESCRIPTIVOS")
 
 # .describe() calcula para cada columna numerica:
 #   count = cuantos valores NO faltantes hay
@@ -184,9 +184,9 @@ print(train.describe(percentiles=[0.25, 0.50, 0.75, 0.95, 0.99, 0.995, 0.999]).T
 
 
 # =============================================================================
-# PARTE 4 — VALORES FALTANTES (missing values / NaN)
+# PARTE 4: VALORES FALTANTES (missing values / NaN)
 # =============================================================================
-titulo("PARTE 4 — VALORES FALTANTES")
+titulo("PARTE 4: VALORES FALTANTES")
 
 # isna() devuelve True/False por celda. .sum() cuenta los True. .mean() da la proporcion.
 faltantes = pd.DataFrame({
@@ -450,9 +450,9 @@ if not faltantes.empty:
 
 
 # =============================================================================
-# PARTE 5 — VALORES SOSPECHOSOS Y OUTLIERS
+# PARTE 5: VALORES SOSPECHOSOS Y OUTLIERS
 # =============================================================================
-titulo("PARTE 5 — VALORES SOSPECHOSOS Y OUTLIERS")
+titulo("PARTE 5: VALORES SOSPECHOSOS Y OUTLIERS")
 
 # --- 5a. Deteccion AUTOMATICA de codigos centinela --------------------------
 # Un "codigo centinela" es un numero que el sistema de origen usa para decir
@@ -813,9 +813,9 @@ if gris.any():
 
 
 # =============================================================================
-# PARTE 6 — RELACION DE CADA VARIABLE CON EL TARGET
+# PARTE 6: RELACION DE CADA VARIABLE CON EL TARGET
 # =============================================================================
-titulo("PARTE 6 — RELACION DE CADA VARIABLE CON EL TARGET")
+titulo("PARTE 6: RELACION DE CADA VARIABLE CON EL TARGET")
 
 # Esta es LA vista mas importante del credit scoring.
 # Idea: partimos cada variable en 10 grupos de igual tamano (deciles) y
@@ -829,7 +829,7 @@ titulo("PARTE 6 — RELACION DE CADA VARIABLE CON EL TARGET")
 #   valen todos 0 y queda UN SOLO bin con las 150,000 filas y la tasa global:
 #   una tabla sin ninguna informacion.
 #
-#   La variable NO es inutil — el salto de 0 a 1 multiplica el riesgo por 7 —
+#   La variable NO es inutil: el salto de 0 a 1 multiplica el riesgo por 7,
 #   lo que falla es el metodo. En esos casos se agrupa por VALOR EXACTO,
 #   que es lo que la variable admite.
 
@@ -903,7 +903,7 @@ for col in cols_mora:
 # "no sabemos si los tiene".
 _cent = ", ".join(f"{c:.0f}" for c in codigos_detectados) if codigos_detectados else "ninguno"
 print("\n  COMPARACION DEL SALTO ENTRE GRAVEDADES")
-print(f"    (centinelas excluidos: {_cent} — su historial es desconocido,")
+print(f"    (centinelas excluidos: {_cent}: su historial es desconocido,")
 print("     no positivo, luego no cuentan como 'tiene atrasos')")
 print(f"\n    {'variable':<38} {'= 0':>8} {'= 1':>8} {'factor':>7} "
       f"{'>= 1':>8} {'factor':>7} {'n(>=1)':>8}")
@@ -926,9 +926,9 @@ for col in cols_mora:
 
 
 # =============================================================================
-# PARTE 7 — CORRELACIONES
+# PARTE 7: CORRELACIONES
 # =============================================================================
-titulo("PARTE 7 — CORRELACIONES")
+titulo("PARTE 7: CORRELACIONES")
 
 # QUE SE ESTA CALCULANDO EXACTAMENTE:
 #   - Coeficiente de PEARSON (el que usa .corr() por defecto).
@@ -982,9 +982,9 @@ else:
 
 
 # =============================================================================
-# PARTE 8 — GRAFICAS
+# PARTE 8: GRAFICAS
 # =============================================================================
-titulo("PARTE 8 — GRAFICAS (se guardan en ./outputs/)")
+titulo("PARTE 8: GRAFICAS (se guardan en ./outputs/)")
 
 # --- Grafica 1: balance de clases -----------------------------------------
 fig, ax = plt.subplots(figsize=(6, 4))

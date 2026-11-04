@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-07_business_evaluation.py — Traduccion del modelo a dolares
-Proyecto: Give Me Some Credit — Probability of Default
+07_business_evaluation.py: Traduccion del modelo a dolares
+Proyecto: Give Me Some Credit: Probability of Default
 
 POR QUE ESTE SCRIPT EXISTE
 
@@ -63,9 +63,9 @@ def titulo(t):
 
 
 # =============================================================================
-# PASO 1 — CARGA
+# PASO 1: CARGA
 # =============================================================================
-titulo("PASO 1 — DATOS Y MODELOS")
+titulo("PASO 1: DATOS Y MODELOS")
 
 modelos = {}
 # Solo los modelos entrenados con train (*_v1). El modelo final de 06 vive en
@@ -94,9 +94,9 @@ for nombre, m in modelos.items():
 
 
 # =============================================================================
-# PASO 2 — SUPUESTOS Y UMBRAL OPTIMO
+# PASO 2: SUPUESTOS Y UMBRAL OPTIMO
 # =============================================================================
-titulo("PASO 2 — SUPUESTOS ECONOMICOS")
+titulo("PASO 2: SUPUESTOS ECONOMICOS")
 
 u_opt = umbral_optimo(MARGEN, PERDIDA)
 print(f"  Prestamo medio           : ${PRESTAMO:,}")
@@ -109,9 +109,9 @@ print("  -> aprobar a todo el que tenga PD por debajo de ese valor")
 
 
 # =============================================================================
-# PASO 3 — BENEFICIO POR UMBRAL
+# PASO 3: BENEFICIO POR UMBRAL
 # =============================================================================
-titulo("PASO 3 — BENEFICIO SEGUN EL UMBRAL DE APROBACION")
+titulo("PASO 3: BENEFICIO SEGUN EL UMBRAL DE APROBACION")
 
 # Politicas de referencia, sin modelo
 ben_todos = beneficio_sin_modelo(y, MARGEN, PERDIDA)
@@ -163,9 +163,9 @@ for nombre, p in predicciones.items():
 
 
 # =============================================================================
-# PASO 4 — ¿CUANDO NO VALE LA PENA EL MODELO?
+# PASO 4: ¿CUANDO NO VALE LA PENA EL MODELO?
 # =============================================================================
-titulo("PASO 4 — SENSIBILIDAD: ¿CUANDO COMPENSA USAR EL MODELO?")
+titulo("PASO 4: SENSIBILIDAD: ¿CUANDO COMPENSA USAR EL MODELO?")
 
 print("  Valor del modelo segun el ratio perdida/ganancia.\n")
 
@@ -203,9 +203,9 @@ print(f"   2. Con perdidas caras ({alto.ratio_L_M:g}x) aportaria ${alto.ganancia
 
 
 # =============================================================================
-# PASO 5 — GRAFICAS
+# PASO 5: GRAFICAS
 # =============================================================================
-titulo("PASO 5 — GRAFICAS")
+titulo("PASO 5: GRAFICAS")
 
 plt.rcParams.update({"font.size": 9, "axes.titlesize": 10.5, "axes.labelsize": 9.5})
 COLOR = {"logistic_v1": "#3a4f7a", "xgboost_v1": "#7a3a6a", "lightgbm_v1": "#1f7a5a"}

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-08_scorecard.py — El scorecard: de coeficientes a puntos
-Proyecto: Give Me Some Credit — Probability of Default
+08_scorecard.py: El scorecard: de coeficientes a puntos
+Proyecto: Give Me Some Credit: Probability of Default
 
 QUE ES UN SCORECARD
 
@@ -107,9 +107,9 @@ def pd_desde_score(s):
 
 
 # =============================================================================
-# PASO 1 — CARGA
+# PASO 1: CARGA
 # =============================================================================
-titulo("PASO 1 — MODELO Y TABLAS WoE")
+titulo("PASO 1: MODELO Y TABLAS WoE")
 
 art_mod = joblib.load(MODELOS / "logistic_v1.joblib")
 modelo, COLS = art_mod["modelo"], art_mod["columnas"]
@@ -136,9 +136,9 @@ for s in [400, 500, 550, 600, 650, 700, 800]:
 
 
 # =============================================================================
-# PASO 2 — CONSTRUIR LA TABLA DE PUNTOS
+# PASO 2: CONSTRUIR LA TABLA DE PUNTOS
 # =============================================================================
-titulo("PASO 2 — LA TABLA DE PUNTOS")
+titulo("PASO 2: LA TABLA DE PUNTOS")
 
 # puntos_ij = -(WoE_ij * beta_i + beta_0/n) * Factor + Offset/n
 def puntos(woe, b):
@@ -181,7 +181,7 @@ ref = (scorecard.dropna(subset=["n"])
        .sort_values("n", ascending=False).groupby("variable").head(1)
        .set_index("variable")["puntos"].to_dict())
 # CUIDADO: los flags no tienen columna n, asi que quedaban fuera del mapa y
-# su "vs_normal" salia siempre 0.0 — incluso estando activados. Su referencia
+# su "vs_normal" salia siempre 0.0: incluso estando activados. Su referencia
 # tiene que ser explicitamente el valor 0.
 for col in COLS:
     if not col.startswith("woe_"):
@@ -201,9 +201,9 @@ print(f"\n  Guardado: artifacts/metrics/scorecard.csv")
 
 
 # =============================================================================
-# PASO 3 — VERIFICACION: ¿la suma de puntos reproduce el modelo?
+# PASO 3: VERIFICACION: ¿la suma de puntos reproduce el modelo?
 # =============================================================================
-titulo("PASO 3 — VERIFICACION")
+titulo("PASO 3: VERIFICACION")
 
 # Esta es la prueba que valida todo el scorecard: sumar los puntos de cada
 # caracteristica de una persona debe dar EXACTAMENTE el mismo score que
@@ -236,9 +236,9 @@ print(f"  [{'OK' if ok else 'ERROR'}] la suma de puntos reproduce el modelo exac
 
 
 # =============================================================================
-# PASO 4 — EJEMPLO: UN CLIENTE CONCRETO
+# PASO 4: EJEMPLO: UN CLIENTE CONCRETO
 # =============================================================================
-titulo("PASO 4 — COMO SE EXPLICA UN RECHAZO")
+titulo("PASO 4: COMO SE EXPLICA UN RECHAZO")
 
 # Elegimos a la persona con peor score de validacion
 i = int(np.argmin(score_sumado))
@@ -260,9 +260,9 @@ print(f"\n  SCORE TOTAL: {det['puntos'].sum():.0f} puntos")
 
 
 # =============================================================================
-# PASO 5 — DISTRIBUCION Y BANDAS DE RIESGO
+# PASO 5: DISTRIBUCION Y BANDAS DE RIESGO
 # =============================================================================
-titulo("PASO 5 — BANDAS DE RIESGO")
+titulo("PASO 5: BANDAS DE RIESGO")
 
 # Los bancos agrupan el score en bandas y asignan politica a cada una.
 bandas = pd.cut(score_sumado, [-np.inf, 500, 550, 600, 650, 700, np.inf],
@@ -285,9 +285,9 @@ tabla_bandas.to_csv(METRICAS / "scorecard_bandas.csv")
 
 
 # =============================================================================
-# PASO 6 — GRAFICAS
+# PASO 6: GRAFICAS
 # =============================================================================
-titulo("PASO 6 — GRAFICAS")
+titulo("PASO 6: GRAFICAS")
 
 plt.rcParams.update({"font.size": 9, "axes.titlesize": 10.5, "axes.labelsize": 9.5})
 BUENO, MALO = "#2b6247", "#a8392f"
@@ -401,7 +401,7 @@ plt.close()
 print(f"  {(PLOTS / '08_scorecard.png').relative_to(AQUI)}")
 
 print("\n" + "=" * 79)
-print(f"SCORECARD GENERADO — {len(scorecard)} atributos | "
+print(f"SCORECARD GENERADO: {len(scorecard)} atributos | "
       f"corte en {umbral_score:.0f} puntos" if ok else "ERROR EN LA VERIFICACION")
 print("=" * 79)
 sys.exit(0 if ok else 1)

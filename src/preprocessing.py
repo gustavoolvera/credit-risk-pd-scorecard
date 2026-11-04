@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-preprocessing.py — Limpieza y feature engineering
-Proyecto: Give Me Some Credit — Probability of Default
+preprocessing.py: Limpieza y feature engineering
+Proyecto: Give Me Some Credit: Probability of Default
 
 Este modulo NO se ejecuta directamente: contiene las FUNCIONES que usan
 los scripts 02_preprocessing.py y los de modelado.
@@ -18,7 +18,7 @@ AMBITO DE LA EVIDENCIA
   ni en el diagnostico ni en la eleccion de los umbrales.
 
   Ademas, los CORTES (100, 2.0, 1.0) se eligieron por la forma de la
-  distribucion de X — colas, bimodalidad, ausencia de denominador — y no
+  distribucion de X: colas, bimodalidad, ausencia de denominador, y no
   optimizando ninguna metrica. Las tasas de default que aparecen abajo son
   VERIFICACION POSTERIOR de que el corte no destruia senal, no el criterio
   con el que se eligio.
@@ -37,7 +37,7 @@ import numpy as np
 import pandas as pd
 
 # =============================================================================
-# CONFIGURACION — los umbrales que decidimos a partir del EDA
+# CONFIGURACION: los umbrales que decidimos a partir del EDA
 # =============================================================================
 
 TARGET = "SeriousDlqin2yrs"
@@ -96,7 +96,7 @@ INGRESO_MINIMO_PLAUSIBLE = 1.0
 
 
 # =============================================================================
-# PASO 1 — LIMPIEZA POR REGLAS
+# PASO 1: LIMPIEZA POR REGLAS
 # =============================================================================
 # Estas transformaciones NO aprenden nada de los datos: son reglas fijas que
 # decidimos nosotros. Por eso pueden aplicarse a cualquier conjunto sin riesgo
@@ -181,7 +181,7 @@ def limpiar(df):
     # dolares es una INFERENCIA nuestra, no un dato del diccionario de Kaggle:
     # se dedujo de que su distribucion coincide en orden de magnitud con la
     # deuda real de las filas normales (DebtRatio x MonthlyIncome). La hipotesis
-    # esta bien respaldada, pero no certificada, y el nombre debe decirlo — si
+    # esta bien respaldada, pero no certificada, y el nombre debe decirlo: si
     # se llamara 'deuda_bruta' a secas, cualquiera que leyera el codigo mas
     # adelante la trataria como un hecho.
     df["deuda_bruta_proxy"] = df["DebtRatio"].where(sin_denominador, np.nan)
@@ -198,7 +198,7 @@ def limpiar(df):
 
 
 # =============================================================================
-# PASO 2 — FEATURE ENGINEERING
+# PASO 2: FEATURE ENGINEERING
 # =============================================================================
 # Variables nuevas construidas con logica de negocio, no combinaciones al azar.
 # Cada una responde a una pregunta que un analista de riesgo se haria.
@@ -261,7 +261,7 @@ def crear_features(df):
 
 
 # =============================================================================
-# PASO 3A — VERSION PARA ARBOLES (XGBoost / LightGBM)
+# PASO 3A: VERSION PARA ARBOLES (XGBoost / LightGBM)
 # =============================================================================
 
 def preparar_arboles(df):

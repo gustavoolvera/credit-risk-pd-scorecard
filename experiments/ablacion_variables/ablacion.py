@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-ablacion.py — ¿Sobran variables en el modelo H (LogReg WoE, 10 variables)?
-Proyecto: Give Me Some Credit — Probability of Default
+ablacion.py: ¿Sobran variables en el modelo H (LogReg WoE, 10 variables)?
+Proyecto: Give Me Some Credit: Probability of Default
 
 EXPERIMENTO AISLADO. Lee los CSV crudos y los artefactos actuales, pero solo
 escribe en experiments/ablacion_variables/resultados/. No toca modelos,
@@ -124,9 +124,9 @@ def nadeau_bengio(d, n_tr, n_te):
 
 
 # =============================================================================
-# PASO 1 — DATOS (mismo split que 02_preprocessing.py)
+# PASO 1: DATOS (mismo split que 02_preprocessing.py)
 # =============================================================================
-titulo("PASO 1 — DATOS")
+titulo("PASO 1: DATOS")
 
 raw = pd.read_csv(ruta_datos(RAIZ) / "cs-training.csv", index_col=0)
 raw.index.name = "row_id"
@@ -153,9 +153,9 @@ print(f"  Umbral de decision PD < {UMBRAL:.4f}  (M={MARGEN}, L={PERDIDA:,.0f})")
 
 
 # =============================================================================
-# PASO 2 — RELEVANCIA DE CADA CANDIDATA (sobre train)
+# PASO 2: RELEVANCIA DE CADA CANDIDATA (sobre train)
 # =============================================================================
-titulo("PASO 2 — RELEVANCIA DE LAS CANDIDATAS")
+titulo("PASO 2: RELEVANCIA DE LAS CANDIDATAS")
 
 perm = pd.read_csv(RAIZ / "artifacts" / "metrics" / "logistic_interpretabilidad.csv")
 perm["v"] = perm["variable"].str[4:]
@@ -195,9 +195,9 @@ print(tablas_bins.round(4).to_string(index=False))
 
 
 # =============================================================================
-# PASO 3 — CV REPETIDA 5x5 CON WoE DENTRO DE CADA PARTICION
+# PASO 3: CV REPETIDA 5x5 CON WoE DENTRO DE CADA PARTICION
 # =============================================================================
-titulo(f"PASO 3 — CV ESTRATIFICADA {N_SPLITS}x{N_REPEATS} (WoE re-aprendido por particion)")
+titulo(f"PASO 3: CV ESTRATIFICADA {N_SPLITS}x{N_REPEATS} (WoE re-aprendido por particion)")
 
 rskf = RepeatedStratifiedKFold(n_splits=N_SPLITS, n_repeats=N_REPEATS, random_state=SEMILLA)
 filas, coefs, iv_fold = [], [], []
@@ -236,9 +236,9 @@ assert cv["n_iter"].max() < PARAMS_LR["max_iter"], "algun ajuste no convergio"
 
 
 # =============================================================================
-# PASO 4 — RESUMEN Y COMPARACIONES PAREADAS CONTRA A
+# PASO 4: RESUMEN Y COMPARACIONES PAREADAS CONTRA A
 # =============================================================================
-titulo("PASO 4 — RESUMEN Y COMPARACIONES PAREADAS (Nadeau-Bengio)")
+titulo("PASO 4: RESUMEN Y COMPARACIONES PAREADAS (Nadeau-Bengio)")
 
 METR = ["AUC", "AP", "KS", "LogLoss", "Brier", "Calib_pp", "Benef_sol",
         "gap_AUC", "gap_LogLoss", "decisiones_cambiadas_pct"]
@@ -273,9 +273,9 @@ for mtr, fmt in [("AUC", ".5f"), ("AP", ".5f"), ("KS", ".5f"), ("LogLoss", ".6f"
 
 
 # =============================================================================
-# PASO 5 — ESTABILIDAD DE COEFICIENTES
+# PASO 5: ESTABILIDAD DE COEFICIENTES
 # =============================================================================
-titulo("PASO 5 — ESTABILIDAD DE LOS COEFICIENTES (25 particiones)")
+titulo("PASO 5: ESTABILIDAD DE LOS COEFICIENTES (25 particiones)")
 
 estab = []
 for nombre in ESCENARIOS:
@@ -305,9 +305,9 @@ for v in CANDIDATAS:
 
 
 # =============================================================================
-# PASO 6 — CONFIRMACION EN VALIDACION (no decide nada)
+# PASO 6: CONFIRMACION EN VALIDACION (no decide nada)
 # =============================================================================
-titulo("PASO 6 — CONFIRMACION EN VALIDACION (30,000; WoE aprendido en todo train)")
+titulo("PASO 6: CONFIRMACION EN VALIDACION (30,000; WoE aprendido en todo train)")
 
 conf, p_val_A = [], None
 for nombre, cols in ESCENARIOS.items():
@@ -330,7 +330,7 @@ print(conf.round(5).to_string(index=False))
 
 
 # =============================================================================
-# PASO 7 — GRAFICA: diferencias pareadas con IC
+# PASO 7: GRAFICA: diferencias pareadas con IC
 # =============================================================================
 fig, axes = plt.subplots(1, 4, figsize=(16, 4.8), sharey=True)
 orden = pareadas["escenario"].tolist()[::-1]

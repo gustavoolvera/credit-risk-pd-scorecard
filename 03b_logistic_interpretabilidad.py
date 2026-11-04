@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-03b_logistic_interpretabilidad.py — ¿Que variables pesan en el baseline?
-Proyecto: Give Me Some Credit — Probability of Default
+03b_logistic_interpretabilidad.py: ¿Que variables pesan en el baseline?
+Proyecto: Give Me Some Credit: Probability of Default
 
 Complementa a 03_train_logistic.py con dos lecturas del modelo YA entrenado:
 
@@ -81,9 +81,9 @@ def legible(col):
 
 
 # =============================================================================
-# PASO 1 — CARGA Y COMPROBACIONES
+# PASO 1: CARGA Y COMPROBACIONES
 # =============================================================================
-titulo("PASO 1 — MODELO, DATOS Y COMPROBACIONES")
+titulo("PASO 1: MODELO, DATOS Y COMPROBACIONES")
 
 RUTA_MODELO = MODELOS / "logistic_v1.joblib"
 RUTA_METRICAS = METRICAS / "logistic_v1.json"
@@ -125,9 +125,9 @@ check(abs(AP_BASE - guardadas["average_precision_val"]) < 1e-5,
 
 
 # =============================================================================
-# PASO 2 — COEFICIENTES ESTANDARIZADOS
+# PASO 2: COEFICIENTES ESTANDARIZADOS
 # =============================================================================
-titulo("PASO 2 — COEFICIENTES ESTANDARIZADOS  beta * sigma(WoE)")
+titulo("PASO 2: COEFICIENTES ESTANDARIZADOS  beta * sigma(WoE)")
 
 # Todas las variables estan en log-odds (WoE), pero con dispersiones muy
 # distintas. sigma se toma de TRAIN: es la escala con la que el modelo
@@ -141,9 +141,9 @@ print(coef.sort_values("rank_beta_std").assign(variable=lambda d: d.variable.map
 
 
 # =============================================================================
-# PASO 3 — PERMUTATION IMPORTANCE EN VALIDACION
+# PASO 3: PERMUTATION IMPORTANCE EN VALIDACION
 # =============================================================================
-titulo("PASO 3 — PERMUTATION IMPORTANCE (validacion)")
+titulo("PASO 3: PERMUTATION IMPORTANCE (validacion)")
 
 # Permutar la columna WoE equivale EXACTAMENTE a permutar la variable original
 # y transformarla despues: el WoE es un mapeo bin -> valor columna a columna.
@@ -184,9 +184,9 @@ for c in perm.sort_values("rank_auc")["variable"]:
 
 
 # =============================================================================
-# PASO 4 — TABLA COMPARATIVA
+# PASO 4: TABLA COMPARATIVA
 # =============================================================================
-titulo("PASO 4 — TABLA COMPARATIVA")
+titulo("PASO 4: TABLA COMPARATIVA")
 
 tabla = coef.merge(perm, on="variable").sort_values("rank_auc").reset_index(drop=True)
 tabla.insert(1, "nombre", tabla["variable"].map(legible))
@@ -224,9 +224,9 @@ resumen = {
 
 
 # =============================================================================
-# PASO 5 — GRAFICAS
+# PASO 5: GRAFICAS
 # =============================================================================
-titulo("PASO 5 — GRAFICAS")
+titulo("PASO 5: GRAFICAS")
 
 # --- Grafica 1: coeficientes estandarizados ---------------------------------
 c = coef.sort_values("beta_std", key=abs, ascending=True)
@@ -297,9 +297,9 @@ plt.close()
 
 
 # =============================================================================
-# PASO 6 — INTEGRIDAD
+# PASO 6: INTEGRIDAD
 # =============================================================================
-titulo("PASO 6 — NADA SE MODIFICO")
+titulo("PASO 6: NADA SE MODIFICO")
 
 huella_despues = {p.name: md5(p) for p in (RUTA_MODELO, RUTA_METRICAS)}
 for nombre in huella_antes:

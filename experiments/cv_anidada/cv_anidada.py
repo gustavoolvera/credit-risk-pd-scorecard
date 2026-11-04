@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-cv_anidada.py — ¿Esta inflado el AUC de CV de XGBoost por la seleccion?
-Proyecto: Give Me Some Credit — Probability of Default
+cv_anidada.py: ¿Esta inflado el AUC de CV de XGBoost por la seleccion?
+Proyecto: Give Me Some Credit: Probability of Default
 
 En 04_train_xgboost.py los hiperparametros se eligen con una rejilla evaluada
 en un subconjunto de train (early stopping). Despues, la CV de 5 folds sobre

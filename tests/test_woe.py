@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-test_woe.py — Pruebas del modulo WoE y del auditor de binning
+test_woe.py: Pruebas del modulo WoE y del auditor de binning
 
 Se ejecuta con:  pytest tests/ -v
 

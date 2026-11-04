@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-seleccion_cv.py — ¿Que modelo elegiria una regla que no use validacion?
-Proyecto: Give Me Some Credit — Probability of Default
+seleccion_cv.py: ¿Que modelo elegiria una regla que no use validacion?
+Proyecto: Give Me Some Credit: Probability of Default
 
 REGLA FIJADA ANTES DE EJECUTAR (2026-11-03)
   Es la regla vigente de 06_evaluation.py con UN solo cambio: las metricas

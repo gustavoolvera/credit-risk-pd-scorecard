@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-revision_metodologica.py — Revision antes de sustituir H (10 vars) por E (8 vars)
-Proyecto: Give Me Some Credit — Probability of Default
+revision_metodologica.py: Revision antes de sustituir H (10 vars) por E (8 vars)
+Proyecto: Give Me Some Credit: Probability of Default
 
 EXPERIMENTO AISLADO: solo escribe en experiments/ablacion_variables/resultados/.
 Solo usa las 120,000 filas de entrenamiento. Ni validacion ni Kaggle.

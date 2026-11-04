@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-shap_xgboost.py — SHAP de XGBoost (analisis historico)
-Proyecto: Give Me Some Credit — Probability of Default
+shap_xgboost.py: SHAP de XGBoost (analisis historico)
+Proyecto: Give Me Some Credit: Probability of Default
 
 Hasta el 2026-11-03 XGBoost era el modelo elegido y 06_evaluation.py calculaba
 su SHAP. Desde la seleccion por CV en train (docs/04 §4.7.2), 06 explica

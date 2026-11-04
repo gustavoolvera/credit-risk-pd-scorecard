@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-test_seleccion.py — Regla de eleccion del modelo final
+test_seleccion.py: Regla de eleccion del modelo final
 
 Se ejecuta con:  pytest tests/ -v
 

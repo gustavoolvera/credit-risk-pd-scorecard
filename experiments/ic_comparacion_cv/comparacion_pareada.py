@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-comparacion_pareada.py — AUC por fold de la CV de 05 y diferencias pareadas
-Proyecto: Give Me Some Credit — Probability of Default
+comparacion_pareada.py: AUC por fold de la CV de 05 y diferencias pareadas
+Proyecto: Give Me Some Credit: Probability of Default
 
 05_train_lightgbm.py guarda solo la media y la desviacion de cada modelo, no
 los AUC de cada fold. Este script los reconstruye con el MISMO procedimiento

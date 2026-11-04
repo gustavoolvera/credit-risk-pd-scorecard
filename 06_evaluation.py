@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-06_evaluation.py — Comparacion final, eleccion del modelo y submission
-Proyecto: Give Me Some Credit — Probability of Default
+06_evaluation.py: Comparacion final, eleccion del modelo y submission
+Proyecto: Give Me Some Credit: Probability of Default
 
 Tres cosas:
   1. Comparar los tres modelos con criterios MULTIPLES, no solo AUC.
@@ -82,9 +82,9 @@ def titulo(t):
 
 
 # =============================================================================
-# PASO 1 — CARGA
+# PASO 1: CARGA
 # =============================================================================
-titulo("PASO 1 — MODELOS Y DATOS")
+titulo("PASO 1: MODELOS Y DATOS")
 
 RAMA = {"logistic_v1": "woe", "xgboost_v1": "trees", "lightgbm_v1": "trees"}
 NOMBRE = {"logistic_v1": "LogReg (WoE)", "xgboost_v1": "XGBoost", "lightgbm_v1": "LightGBM"}
@@ -119,9 +119,9 @@ print(f"\n  Validacion: {len(y_val):,} personas | {int(y_val.sum()):,} morosos")
 
 
 # =============================================================================
-# PASO 2 — COMPARACION MULTI-CRITERIO
+# PASO 2: COMPARACION MULTI-CRITERIO
 # =============================================================================
-titulo("PASO 2 — COMPARACION EN VALIDACION")
+titulo("PASO 2: COMPARACION EN VALIDACION")
 
 cv_tabla = {}
 f_cv = METRICAS / "comparacion_modelos_cv.csv"
@@ -151,9 +151,9 @@ print(comp.to_string(index=False))
 
 
 # =============================================================================
-# PASO 3 — LA DECISION NO ES SOLO EL AUC
+# PASO 3: LA DECISION NO ES SOLO EL AUC
 # =============================================================================
-titulo("PASO 3 — CRITERIOS DE DECISION")
+titulo("PASO 3: CRITERIOS DE DECISION")
 
 fila = {r["modelo"]: r for _, r in comp.iterrows()}
 NOMBRES_BASE = ["LogReg (WoE)", "XGBoost", "LightGBM"]
@@ -184,9 +184,9 @@ else:
 
 
 # =============================================================================
-# PASO 4 — ELECCION DEL MODELO FINAL
+# PASO 4: ELECCION DEL MODELO FINAL
 # =============================================================================
-titulo("PASO 4 — MODELO ELEGIDO")
+titulo("PASO 4: MODELO ELEGIDO")
 
 # Regla (docs/04_modelado.md §4.7.2): entre los modelos con AUC medio de CV a
 # menos de 0.002 del mejor, el de menor error de calibracion medio. La CV es
@@ -243,9 +243,9 @@ artifacts.guardar_json({
 
 
 # =============================================================================
-# PASO 4B — EXPLICABILIDAD DEL MODELO ELEGIDO (SHAP)
+# PASO 4B: EXPLICABILIDAD DEL MODELO ELEGIDO (SHAP)
 # =============================================================================
-titulo("PASO 4B — ¿POR QUE RECHAZA A QUIEN RECHAZA?")
+titulo("PASO 4B: ¿POR QUE RECHAZA A QUIEN RECHAZA?")
 
 # El problema de elegir un booster: la regresion logistica da un scorecard
 # donde cada rango vale unos puntos fijos, y con eso se le explica a un
@@ -255,7 +255,7 @@ titulo("PASO 4B — ¿POR QUE RECHAZA A QUIEN RECHAZA?")
 # SHAP lo resuelve: reparte la prediccion de CADA persona entre sus
 # variables, de forma que las contribuciones suman exactamente el
 # resultado del modelo. Es lo mas parecido a un scorecard que puede tener
-# un booster — con una diferencia clave: en el scorecard los puntos son
+# un booster: con una diferencia clave: en el scorecard los puntos son
 # los MISMOS para todos; en SHAP cada persona tiene su propio desglose.
 try:
     import shap
@@ -342,9 +342,9 @@ elif _hay_shap:
 
 
 # =============================================================================
-# PASO 5 — REENTRENAR CON LAS 150,000 FILAS
+# PASO 5: REENTRENAR CON LAS 150,000 FILAS
 # =============================================================================
-titulo("PASO 5 — REENTRENAMIENTO CON TODOS LOS DATOS ETIQUETADOS")
+titulo("PASO 5: REENTRENAMIENTO CON TODOS LOS DATOS ETIQUETADOS")
 
 art = modelos[ELEGIDO]
 rama = RAMA[ELEGIDO]
@@ -434,9 +434,9 @@ print("  (in-sample: NO es una estimacion de rendimiento, solo cordura)")
 
 
 # =============================================================================
-# PASO 6 — PREDICCION SOBRE cs-test.csv
+# PASO 6: PREDICCION SOBRE cs-test.csv
 # =============================================================================
-titulo("PASO 6 — SUBMISSION")
+titulo("PASO 6: SUBMISSION")
 
 p_test = modelo_final.predict_proba(X_test)[:, 1]
 
@@ -481,9 +481,9 @@ for stem, a in modelos.items():
 
 
 # =============================================================================
-# PASO 7 — GRAFICAS FINALES
+# PASO 7: GRAFICAS FINALES
 # =============================================================================
-titulo("PASO 7 — GRAFICAS")
+titulo("PASO 7: GRAFICAS")
 
 fig, axes = plt.subplots(2, 2, figsize=(13, 10))
 colores = {"logistic_v1": "#3a4f7a", "xgboost_v1": "#7a3a6a",
@@ -544,6 +544,6 @@ print(f"  artifacts/metrics/comparacion_final.csv")
 
 print("\n" + "=" * 79)
 print(f"MODELO FINAL: {elegido_nombre}   |   submission con {len(sub):,} predicciones"
-      if ok else "HAY ERRORES — REVISAR ARRIBA")
+      if ok else "HAY ERRORES: REVISAR ARRIBA")
 print("=" * 79)
 sys.exit(0 if ok else 1)

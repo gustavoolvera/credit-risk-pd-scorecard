@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-predict.py — Puntuar solicitantes nuevos
-Proyecto: Give Me Some Credit — Probability of Default
+predict.py: Puntuar solicitantes nuevos
+Proyecto: Give Me Some Credit: Probability of Default
 
 Inferencia sobre solicitantes nuevos. No entrena nada: carga los artefactos
 guardados y los aplica.
@@ -59,7 +59,7 @@ def resolver_artefactos(modelo):
 
 TARGET = "SeriousDlqin2yrs"
 
-# Escala del scorecard — debe coincidir con 08_scorecard.py
+# Escala del scorecard: debe coincidir con 08_scorecard.py
 SCORE_BASE, ODDS_BASE, PDO = 600, 50, 20
 FACTOR = PDO / np.log(2)
 OFFSET = SCORE_BASE - FACTOR * np.log(ODDS_BASE)

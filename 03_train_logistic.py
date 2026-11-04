@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-03_train_logistic.py — Regresion logistica sobre WoE (modelo baseline)
-Proyecto: Give Me Some Credit — Probability of Default
+03_train_logistic.py: Regresion logistica sobre WoE (modelo baseline)
+Proyecto: Give Me Some Credit: Probability of Default
 
 Este es el BASELINE: el numero de referencia contra el que compararemos
 XGBoost y LightGBM. Sin baseline, decir que un modelo "es bueno" no
@@ -63,9 +63,9 @@ def titulo(t):
 
 
 # =============================================================================
-# PASO 1 — CARGA
+# PASO 1: CARGA
 # =============================================================================
-titulo("PASO 1 — CARGA DE LOS DATASETS WoE")
+titulo("PASO 1: CARGA DE LOS DATASETS WoE")
 
 train = pd.read_parquet(PROC / "train.parquet")
 val = pd.read_parquet(PROC / "val.parquet")
@@ -81,9 +81,9 @@ print(f"  Tasa de default: {y_tr.mean()*100:.2f}% (train) | {y_val.mean()*100:.2
 
 
 # =============================================================================
-# PASO 2 — DIAGNOSTICO DE MULTICOLINEALIDAD (VIF)
+# PASO 2: DIAGNOSTICO DE MULTICOLINEALIDAD (VIF)
 # =============================================================================
-titulo("PASO 2 — MULTICOLINEALIDAD: VARIANCE INFLATION FACTOR")
+titulo("PASO 2: MULTICOLINEALIDAD: VARIANCE INFLATION FACTOR")
 
 # VIF mide cuanto se "infla" la incertidumbre del coeficiente de una variable
 # por culpa de las demas. Se calcula regresando cada variable contra TODAS
@@ -118,9 +118,9 @@ print(f"\n  Variables con VIF > 5: {len(problematicas)}")
 
 
 # =============================================================================
-# PASO 3 — COMPARAR SUBCONJUNTOS DE VARIABLES
+# PASO 3: COMPARAR SUBCONJUNTOS DE VARIABLES
 # =============================================================================
-titulo("PASO 3 — QUE SUBCONJUNTO USAR")
+titulo("PASO 3: QUE SUBCONJUNTO USAR")
 
 # Las 10 variables ORIGINALES del dataset (ya en escala WoE).
 ORIGINALES = [
@@ -259,9 +259,9 @@ print("\n  El modelo final se reentrena con el train COMPLETO (ajuste + seleccio
 
 
 # =============================================================================
-# PASO 4 — ENTRENAR EL MODELO FINAL
+# PASO 4: ENTRENAR EL MODELO FINAL
 # =============================================================================
-titulo("PASO 4 — MODELO FINAL")
+titulo("PASO 4: MODELO FINAL")
 
 # ¿Usar class_weight='balanced'?
 #   Con 6.68% de eventos, "balanced" hace que el modelo preste mas atencion
@@ -283,9 +283,9 @@ p_val = modelo.predict_proba(X_val[COLS])[:, 1]
 
 
 # =============================================================================
-# PASO 5 — EVALUACION
+# PASO 5: EVALUACION
 # =============================================================================
-titulo("PASO 5 — EVALUACION EN VALIDACION")
+titulo("PASO 5: EVALUACION EN VALIDACION")
 
 auc_tr = roc_auc_score(y_tr, p_tr)
 auc_val = roc_auc_score(y_val, p_val)
@@ -347,9 +347,9 @@ print(f"    Rechazamos por error a {fp:,} clientes buenos")
 
 
 # =============================================================================
-# PASO 6 — COEFICIENTES
+# PASO 6: COEFICIENTES
 # =============================================================================
-titulo("PASO 6 — COEFICIENTES DEL MODELO")
+titulo("PASO 6: COEFICIENTES DEL MODELO")
 
 coefs = pd.DataFrame({
     "variable": COLS,
@@ -377,23 +377,23 @@ if invertidos:
 
 
 # =============================================================================
-# PASO 7 — DIAGNOSTICOS: ¿ESTA EL MODELO REALMENTE BIEN?
+# PASO 7: DIAGNOSTICOS: ¿ESTA EL MODELO REALMENTE BIEN?
 # =============================================================================
-titulo("PASO 7 — DIAGNOSTICOS")
+titulo("PASO 7: DIAGNOSTICOS")
 
 # --- 7a. ¿Convergio el optimizador? -----------------------------------------
 # Si llegara al tope de iteraciones, no habria encontrado el optimo y los
 # coeficientes no serian de fiar.
 print(f"  [1] CONVERGENCIA")
 print(f"      Iteraciones usadas: {modelo.n_iter_[0]} de max_iter=2000")
-print(f"      -> {'convergio' if modelo.n_iter_[0] < 2000 else 'NO CONVERGIO — revisar'}")
+print(f"      -> {'convergio' if modelo.n_iter_[0] < 2000 else 'NO CONVERGIO: revisar'}")
 
 # --- 7b. Calibracion --------------------------------------------------------
 # El AUC solo mide si el modelo ORDENA bien. La calibracion pregunta si las
 # probabilidades son creibles. De ella depende que la regla de negocio
 # umbral = M/(M+L) funcione: sin PD reales, el modelo ordena pero no dice
 # cuanto prestar.
-print(f"\n  [2] CALIBRACION — si dice '8% de riesgo', ¿falla el 8% de ese grupo?")
+print(f"\n  [2] CALIBRACION: si dice '8% de riesgo', ¿falla el 8% de ese grupo?")
 cal = tabla_calibracion(y_val, p_val)
 print(cal.to_string())
 err_cal = error_calibracion(y_val, p_val)
@@ -432,9 +432,9 @@ for C in [0.001, 0.01, 0.1, 1.0, 10.0, 100.0]:
 
 
 # =============================================================================
-# PASO 8 — GRAFICAS
+# PASO 8: GRAFICAS
 # =============================================================================
-titulo("PASO 8 — GRAFICAS")
+titulo("PASO 8: GRAFICAS")
 
 fig, axes = plt.subplots(2, 2, figsize=(13, 10))
 
@@ -506,9 +506,9 @@ print(f"  Guardado: {(PLOTS / '03_logistic_evaluacion.png').relative_to(AQUI)}")
 
 
 # =============================================================================
-# PASO 8 — GUARDAR
+# PASO 8: GUARDAR
 # =============================================================================
-titulo("PASO 8 — GUARDAR MODELO Y METRICAS")
+titulo("PASO 8: GUARDAR MODELO Y METRICAS")
 
 joblib.dump({
     "modelo": modelo,
@@ -539,5 +539,5 @@ comparacion.to_csv(METRICAS / "logistic_comparacion_subconjuntos.csv", index=Fal
 
 
 print("\n" + "=" * 79)
-print(f"BASELINE ESTABLECIDO — ROC-AUC = {auc_val:.5f}")
+print(f"BASELINE ESTABLECIDO: ROC-AUC = {auc_val:.5f}")
 print("=" * 79)

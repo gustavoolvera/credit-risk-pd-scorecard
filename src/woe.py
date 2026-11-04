@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-woe.py — Weight of Evidence e Information Value
-Proyecto: Give Me Some Credit — Probability of Default
+woe.py: Weight of Evidence e Information Value
+Proyecto: Give Me Some Credit: Probability of Default
 
 Modulo separado de preprocessing.py porque WoE es una tecnica autocontenida:
 tiene su propia matematica, sus propios artefactos (las tablas aprendidas) y
@@ -40,7 +40,7 @@ import pandas as pd
 #      (Ej: en 90+ dias el salto 0->1 es +29 puntos y el 3->4 solo +9.
 #       Una recta no puede representar eso; los bins si.)
 #   2. Los outliers dejan de importar: solo cuenta en que bin caes.
-#   3. Los NaN son un bin mas — no hay que imputar nada.
+#   3. Los NaN son un bin mas: no hay que imputar nada.
 #   4. Todas las variables quedan en la misma escala (log-odds), lo que hace
 #      los coeficientes comparables entre si.
 #
@@ -99,7 +99,7 @@ def columnas_flag(df):
 def _asignar_bins(serie, cortes):
     """
     Convierte una serie numerica en su bin correspondiente.
-    Los NaN se convierten en la categoria 'FALTANTE' — en WoE los faltantes
+    Los NaN se convierten en la categoria 'FALTANTE': en WoE los faltantes
     son un grupo mas, con su propio nivel de riesgo. No hay que imputarlos.
     """
     binned = pd.cut(serie, bins=cortes)
@@ -114,8 +114,8 @@ def _tabla_woe(bins, y, suavizado=0.5):
     tabla WoE.
 
     Existe como funcion aparte porque la usan dos consumidores con propositos
-    distintos —aprender_woe() para el pipeline y evaluar_binning() para la
-    auditoria— y la formula debe ser literalmente la misma en ambos. Si se
+    distintos (aprender_woe() para el pipeline y evaluar_binning() para la
+    auditoria) y la formula debe ser literalmente la misma en ambos. Si se
     duplicara, una mejora en una no llegaria a la otra.
     """
     total_eventos = int(y.sum())
@@ -439,7 +439,7 @@ def chimerge(x, y, *, min_bins=3, max_bins=8, minimo_pct_bin=0.01,
     forzar_monotonia: False (defecto) | 'increasing' | 'decreasing'.
     El defecto es no forzarla porque varias variables del proyecto tienen forma
     de U legitima. Si se pide y choca con min_bins, la monotonia tiene
-    prioridad (suelo absoluto: 2 bins) — ver FASE C.
+    prioridad (suelo absoluto: 2 bins): ver FASE C.
 
     Devuelve: lista de cortes utilizable con pd.cut / _asignar_bins.
     """

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-ablacion_bloque.py — ¿Cuanto aporta el bloque de atrasos a XGBoost?
-Proyecto: Give Me Some Credit — Probability of Default
+ablacion_bloque.py: ¿Cuanto aporta el bloque de atrasos a XGBoost?
+Proyecto: Give Me Some Credit: Probability of Default
 
 EXPERIMENTO AISLADO: solo escribe en experiments/ablacion_bloque_xgb/resultados/.
 No toca xgboost_v1.joblib ni ningun artefacto del pipeline.
@@ -120,9 +120,9 @@ def nb(d, n_tr, n_te, nivel=0.95):
 
 
 # =============================================================================
-# PASO 1 — DATOS
+# PASO 1: DATOS
 # =============================================================================
-titulo("PASO 1 — DATOS (rama de arboles)")
+titulo("PASO 1: DATOS (rama de arboles)")
 tr = pd.read_parquet(RAIZ / "datasets" / "processed" / "trees" / "train.parquet")
 va = pd.read_parquet(RAIZ / "datasets" / "processed" / "trees" / "val.parquet")
 X_tr, y_tr = tr[COLS], tr[TARGET]
@@ -134,9 +134,9 @@ for k, v in ESC.items():
 
 
 # =============================================================================
-# PASO 2 — CV 5x5 PAREADA
+# PASO 2: CV 5x5 PAREADA
 # =============================================================================
-titulo("PASO 2 — CV ESTRATIFICADA 5x5 (mismas particiones para los 4 escenarios)")
+titulo("PASO 2: CV ESTRATIFICADA 5x5 (mismas particiones para los 4 escenarios)")
 rskf = RepeatedStratifiedKFold(n_splits=5, n_repeats=5, random_state=SEMILLA)
 filas, t0 = [], time.time()
 for k, (itr, ite) in enumerate(rskf.split(X_tr, y_tr)):
@@ -155,9 +155,9 @@ n_tr = len(X_tr) - n_te
 
 
 # =============================================================================
-# PASO 3 — RESUMEN Y DIFERENCIAS PAREADAS CONTRA A
+# PASO 3: RESUMEN Y DIFERENCIAS PAREADAS CONTRA A
 # =============================================================================
-titulo("PASO 3 — RESUMEN Y DIFERENCIAS PAREADAS (Nadeau-Bengio, IC 95%)")
+titulo("PASO 3: RESUMEN Y DIFERENCIAS PAREADAS (Nadeau-Bengio, IC 95%)")
 METR = ["AUC", "KS", "LogLoss", "AP", "Brier", "Calib_pp", "Benef_sol", "arboles"]
 resumen = cv.groupby("escenario", sort=False)[METR].agg(["mean", "std"])
 resumen.columns = [f"{a}_{b}" for a, b in resumen.columns]
@@ -183,9 +183,9 @@ for nombre, g in par.groupby("escenario", sort=False):
 
 
 # =============================================================================
-# PASO 4 — CONFIRMACION EN VALIDACION (no decide nada)
+# PASO 4: CONFIRMACION EN VALIDACION (no decide nada)
 # =============================================================================
-titulo("PASO 4 — CONFIRMACION EN VALIDACION (mismo split de early stopping que 04)")
+titulo("PASO 4: CONFIRMACION EN VALIDACION (mismo split de early stopping que 04)")
 conf, pA = [], None
 for nombre, cols in ESC.items():
     m = entrenar(X_tr, y_tr, cols)
@@ -205,7 +205,7 @@ print(f"\n  Control: AUC del modelo de produccion en validacion = {prod:.5f} "
 
 
 # =============================================================================
-# PASO 5 — GRAFICA
+# PASO 5: GRAFICA
 # =============================================================================
 fig, axes = plt.subplots(1, 3, figsize=(14, 3.8), sharey=True)
 orden = list(ESC)[1:][::-1]

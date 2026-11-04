@@ -1,4 +1,4 @@
-# Give Me Some Credit — Probability of Default
+# Give Me Some Credit: Probability of Default
 # Probado con Python 3.13.9. Instalar con:  pip install -r requirements.txt
 # Versiones fijadas: con otra version de xgboost los AUC cambian en la 7.a cifra.
 

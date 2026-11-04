@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-04_train_xgboost.py — XGBoost sobre los datos crudos
-Proyecto: Give Me Some Credit — Probability of Default
+04_train_xgboost.py: XGBoost sobre los datos crudos
+Proyecto: Give Me Some Credit: Probability of Default
 
 Usa la rama 'trees' del preprocesamiento: valores CRUDOS, NaN nativos y
 flags. Nada de WoE, nada de escalado, nada de imputacion.
@@ -73,9 +73,9 @@ def auc(modelo, X, y):
 
 
 # =============================================================================
-# PASO 1 — CARGA Y VERIFICACION DEL FORMATO
+# PASO 1: CARGA Y VERIFICACION DEL FORMATO
 # =============================================================================
-titulo("PASO 1 — CARGA Y FORMATO")
+titulo("PASO 1: CARGA Y FORMATO")
 
 train = pd.read_parquet(PROC / "train.parquet")
 val = pd.read_parquet(PROC / "val.parquet")
@@ -111,9 +111,9 @@ print(f"    validacion      : {len(X_val):>7,} filas   <- INTACTA hasta el final
 
 
 # =============================================================================
-# PASO 2 — BASELINE CON PARAMETROS POR DEFECTO
+# PASO 2: BASELINE CON PARAMETROS POR DEFECTO
 # =============================================================================
-titulo("PASO 2 — BASELINE (parametros por defecto)")
+titulo("PASO 2: BASELINE (parametros por defecto)")
 
 t0 = time.time()
 base = XGBClassifier(
@@ -128,13 +128,13 @@ print(f"  AUC ajuste     : {auc(base, X_fit, y_fit):.5f}")
 print(f"  AUC validacion : {auc(base, X_val, y_val):.5f}")
 ref_log = artifacts.cargar_json(METRICAS / "logistic_v1.json")
 if ref_log:
-    print(f"\n  Referencia — LogReg (logistic_v1.json): AUC validacion {ref_log['auc_val']:.5f}")
+    print(f"\n  Referencia: LogReg (logistic_v1.json): AUC validacion {ref_log['auc_val']:.5f}")
 
 
 # =============================================================================
-# PASO 3 — ¿HACEN FALTA LAS VARIABLES DERIVADAS?
+# PASO 3: ¿HACEN FALTA LAS VARIABLES DERIVADAS?
 # =============================================================================
-titulo("PASO 3 — ¿APORTAN ALGO LAS VARIABLES DERIVADAS?")
+titulo("PASO 3: ¿APORTAN ALGO LAS VARIABLES DERIVADAS?")
 
 # En la regresion logistica las 7 derivadas hubo que quitarlas: causaban
 # multicolinealidad y 4 signos invertidos, a cambio de +0.0003 de AUC.
@@ -174,9 +174,9 @@ print(f"\n  Se usan las {len(COLS)} variables. A diferencia de LogReg, aqui no")
 
 
 # =============================================================================
-# PASO 4 — EARLY STOPPING: ¿CUANTOS ARBOLES?
+# PASO 4: EARLY STOPPING: ¿CUANTOS ARBOLES?
 # =============================================================================
-titulo("PASO 4 — EARLY STOPPING")
+titulo("PASO 4: EARLY STOPPING")
 
 # XGBoost construye arboles de forma secuencial: cada uno corrige los errores
 # de los anteriores. Con demasiados, empieza a memorizar el ruido del train.
@@ -202,9 +202,9 @@ print("\n  Se detuvo solo: anadir mas arboles ya no mejoraba nada.")
 
 
 # =============================================================================
-# PASO 5 — BUSQUEDA DE HIPERPARAMETROS
+# PASO 5: BUSQUEDA DE HIPERPARAMETROS
 # =============================================================================
-titulo("PASO 5 — BUSQUEDA DE HIPERPARAMETROS")
+titulo("PASO 5: BUSQUEDA DE HIPERPARAMETROS")
 
 # A diferencia de LogReg (donde C no cambiaba nada), en XGBoost los
 # hiperparametros SI importan mucho. Los principales:
@@ -270,9 +270,9 @@ for k, v in MEJORES.items():
 
 
 # =============================================================================
-# PASO 6 — ¿scale_pos_weight?
+# PASO 6: ¿scale_pos_weight?
 # =============================================================================
-titulo("PASO 6 — EL DESBALANCE: ¿scale_pos_weight?")
+titulo("PASO 6: EL DESBALANCE: ¿scale_pos_weight?")
 
 # Es el equivalente de class_weight='balanced' en XGBoost: multiplica el peso
 # de la clase minoritaria. Igual que alli, DEFORMA las probabilidades.
@@ -290,9 +290,9 @@ for etiqueta, spw in [("sin ajustar (PD calibrada)", 1.0),
 
 
 # =============================================================================
-# PASO 7 — MODELO FINAL Y EVALUACION
+# PASO 7: MODELO FINAL Y EVALUACION
 # =============================================================================
-titulo("PASO 7 — MODELO FINAL")
+titulo("PASO 7: MODELO FINAL")
 
 modelo = XGBClassifier(
     n_estimators=3000, learning_rate=0.05, random_state=SEMILLA,
@@ -324,9 +324,9 @@ if ref_log:
 
 
 # =============================================================================
-# PASO 8 — IMPORTANCIA DE VARIABLES
+# PASO 8: IMPORTANCIA DE VARIABLES
 # =============================================================================
-titulo("PASO 8 — QUE VARIABLES USA EL MODELO")
+titulo("PASO 8: QUE VARIABLES USA EL MODELO")
 
 imp = pd.DataFrame({
     "variable": COLS,
@@ -338,9 +338,9 @@ print(imp.head(15).to_string(index=False))
 
 
 # =============================================================================
-# PASO 9 — VALIDACION CRUZADA
+# PASO 9: VALIDACION CRUZADA
 # =============================================================================
-titulo("PASO 9 — VALIDACION CRUZADA (5 folds)")
+titulo("PASO 9: VALIDACION CRUZADA (5 folds)")
 
 # Un solo split tiene una variabilidad de ~±0.003 de AUC. La CV da la media y
 # la dispersion entre folds. La comparacion con LogReg y LightGBM se hace en
@@ -360,9 +360,9 @@ print("  Comparacion emparejada con los otros modelos: ver 05_train_lightgbm.py"
 
 
 # =============================================================================
-# PASO 10 — GRAFICAS Y GUARDADO
+# PASO 10: GRAFICAS Y GUARDADO
 # =============================================================================
-titulo("PASO 10 — GRAFICAS Y GUARDADO")
+titulo("PASO 10: GRAFICAS Y GUARDADO")
 
 fig, axes = plt.subplots(2, 2, figsize=(13, 10))
 
@@ -430,6 +430,6 @@ rej.to_csv(METRICAS / "xgboost_rejilla.csv", index=False)
 
 
 print("\n" + "=" * 79)
-print(f"XGBoost — AUC validacion = {auc_val:.5f} | CV = {scores_xgb.mean():.5f} "
+print(f"XGBoost: AUC validacion = {auc_val:.5f} | CV = {scores_xgb.mean():.5f} "
       f"+/- {scores_xgb.std():.5f}")
 print("=" * 79)

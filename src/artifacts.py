@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-artifacts.py — Persistencia de los transformadores aprendidos
-Proyecto: Give Me Some Credit — Probability of Default
+artifacts.py: Persistencia de los transformadores aprendidos
+Proyecto: Give Me Some Credit: Probability of Default
 
 POR QUE ESTE MODULO EXISTE
 
@@ -12,7 +12,7 @@ Si manana llega un cliente nuevo y hay que puntuarlo, necesitas aplicarle
 EXACTAMENTE los mismos cortes de bins y los mismos valores WoE que se
 aprendieron el dia del entrenamiento. Sin eso tendrias que re-ejecutar todo
 el pipeline, y bastaria que cambiara una constante o la semilla para que el
-scorecard dejara de ser el mismo — y ya no podrias explicar por que una
+scorecard dejara de ser el mismo: y ya no podrias explicar por que una
 persona recibio la puntuacion que recibio.
 
 En riesgo de modelo esto es un requisito, no una comodidad: el scorecard
@@ -126,7 +126,7 @@ def resumen(artefacto):
     """Devuelve un resumen legible del artefacto, para inspeccionarlo."""
     m = artefacto["metadatos"]
     lineas = [
-        f"Artefacto version {artefacto['version']} — creado {artefacto['creado']}",
+        f"Artefacto version {artefacto['version']}: creado {artefacto['creado']}",
         f"  Entrenado con : {m['n_filas_train']:,} filas",
         f"  Default rate  : {m['tasa_default_train']*100:.2f}%",
         f"  Semilla       : {m['semilla']}",

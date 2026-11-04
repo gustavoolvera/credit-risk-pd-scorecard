@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-02_preprocessing.py — Orquestador del preprocesamiento
-Proyecto: Give Me Some Credit — Probability of Default
+02_preprocessing.py: Orquestador del preprocesamiento
+Proyecto: Give Me Some Credit: Probability of Default
 
 Este script no contiene logica de transformacion: solo coordina.
 Carga datos, hace UN solo split, llama a las funciones de src/, guarda
@@ -61,9 +61,9 @@ def titulo(t):
 
 
 # =============================================================================
-# PASO 1 — CARGA
+# PASO 1: CARGA
 # =============================================================================
-titulo("PASO 1 — CARGA DE DATOS")
+titulo("PASO 1: CARGA DE DATOS")
 
 train_raw = pd.read_csv(DATA / "cs-training.csv", index_col=0)
 test_raw = pd.read_csv(DATA / "cs-test.csv", index_col=0)
@@ -80,9 +80,9 @@ print(f"  Identificador   : '{ID}' (indice original del CSV)")
 
 
 # =============================================================================
-# PASO 2 — SPLIT UNICO TRAIN / VALIDACION
+# PASO 2: SPLIT UNICO TRAIN / VALIDACION
 # =============================================================================
-titulo("PASO 2 — SPLIT UNICO TRAIN / VALIDACION")
+titulo("PASO 2: SPLIT UNICO TRAIN / VALIDACION")
 
 # ¿Por que dividir AQUI?
 #   El criterio no es "antes de limpiar", sino antes de cualquier operacion
@@ -127,9 +127,9 @@ print("\n  Las tasas coinciden -> el estratificado funciono.")
 
 
 # =============================================================================
-# PASO 3 — LIMPIEZA Y FEATURE ENGINEERING (comun a las dos ramas)
+# PASO 3: LIMPIEZA Y FEATURE ENGINEERING (comun a las dos ramas)
 # =============================================================================
-titulo("PASO 3 — LIMPIEZA Y FEATURE ENGINEERING")
+titulo("PASO 3: LIMPIEZA Y FEATURE ENGINEERING")
 
 def procesar(df):
     """Reglas fijas: no aprenden del target, se aplican igual a los tres."""
@@ -179,9 +179,9 @@ if n_no:
 
 
 # =============================================================================
-# PASO 4 — RAMA A: ARBOLES (XGBoost / LightGBM)
+# PASO 4: RAMA A: ARBOLES (XGBoost / LightGBM)
 # =============================================================================
-titulo("PASO 4 — RAMA A: ARBOLES")
+titulo("PASO 4: RAMA A: ARBOLES")
 
 tr_trees = pp.preparar_arboles(X_tr_c)
 val_trees = pp.preparar_arboles(X_val_c)
@@ -200,9 +200,9 @@ print(f"\n  Guardado en {PROC.relative_to(AQUI)}/trees/")
 
 
 # =============================================================================
-# PASO 5 — RAMA B: WoE (Logistic Regression)
+# PASO 5: RAMA B: WoE (Logistic Regression)
 # =============================================================================
-titulo("PASO 5 — RAMA B: WoE")
+titulo("PASO 5: RAMA B: WoE")
 
 # APRENDER: solo con train, porque mira el target.
 tablas_woe = woe_mod.aprender_woe(X_tr_c, y_tr)
@@ -231,9 +231,9 @@ print(f"\n  Guardado en {PROC.relative_to(AQUI)}/woe/")
 
 
 # =============================================================================
-# PASO 6 — PERSISTIR EL TRANSFORMADOR
+# PASO 6: PERSISTIR EL TRANSFORMADOR
 # =============================================================================
-titulo("PASO 6 — PERSISTIR EL TRANSFORMADOR")
+titulo("PASO 6: PERSISTIR EL TRANSFORMADOR")
 
 # Guardar los .parquet no basta: son el RESULTADO de la transformacion,
 # no la transformacion. Para puntuar un cliente nuevo manana hay que
@@ -252,9 +252,9 @@ print(f"\n  Guardado en {ruta.relative_to(AQUI)}")
 
 
 # =============================================================================
-# PASO 7 — VERIFICACIONES
+# PASO 7: VERIFICACIONES
 # =============================================================================
-titulo("PASO 7 — VERIFICACIONES")
+titulo("PASO 7: VERIFICACIONES")
 
 ok = True
 
@@ -302,6 +302,6 @@ check(repro.equals(test_woe.head(500)),
       "el artefacto recargado reproduce exactamente la transformacion")
 
 print("\n" + "=" * 79)
-print("PREPROCESAMIENTO COMPLETADO" if ok else "HAY ERRORES — REVISAR ARRIBA")
+print("PREPROCESAMIENTO COMPLETADO" if ok else "HAY ERRORES: REVISAR ARRIBA")
 print("=" * 79)
 sys.exit(0 if ok else 1)

@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 """
-evaluation.py — Metricas de evaluacion y traduccion a negocio
-Proyecto: Give Me Some Credit — Probability of Default
+evaluation.py: Metricas de evaluacion y traduccion a negocio
+Proyecto: Give Me Some Credit: Probability of Default
 
 POR QUE ESTE MODULO EXISTE
 
 Estas funciones vivian sueltas dentro de 03, 06 y 07. Eso tenia dos
 problemas: se duplicaban entre scripts (y podian desincronizarse), y no
-se podian probar — un test no puede importar un script sin ejecutarlo
+se podian probar: un test no puede importar un script sin ejecutarlo
 entero.
 
 Al extraerlas aqui, la logica que decide si un modelo es aceptable queda

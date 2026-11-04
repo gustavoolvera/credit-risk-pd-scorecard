@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-seleccion.py — Eleccion del modelo final con CV dentro de train
-Proyecto: Give Me Some Credit — Probability of Default
+seleccion.py: Eleccion del modelo final con CV dentro de train
+Proyecto: Give Me Some Credit: Probability of Default
 
 Regla (docs/04_modelado.md §4.7.2): entre los modelos con AUC medio de CV a
 menos de MARGEN_AUC del mejor, se elige el de menor error de calibracion medio.

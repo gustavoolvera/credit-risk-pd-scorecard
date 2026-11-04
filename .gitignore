@@ -1,19 +1,19 @@
 # =============================================================================
-# Give Me Some Credit (PD) — .gitignore
+# Give Me Some Credit (PD): .gitignore
 # =============================================================================
 # REGLA: al repositorio va el CODIGO, no lo que el codigo produce.
 # Todo lo ignorado aqui se regenera ejecutando los scripts en orden:
 #     01_eda.py -> 02_preprocessing.py -> 03..07
 # =============================================================================
 
-# --- Datos procesados (~14 MB) — los regenera 02_preprocessing.py ------------
+# --- Datos procesados (~14 MB): los regenera 02_preprocessing.py ------------
 datasets/
 
-# --- Modelos y transformadores (~6 MB) — los regeneran 02..05 ----------------
+# --- Modelos y transformadores (~6 MB): los regeneran 02..05 ----------------
 artifacts/models/
 artifacts/preprocessors/
 
-# --- Submissions — las regenera 06_evaluation.py -----------------------------
+# --- Submissions: las regenera 06_evaluation.py -----------------------------
 artifacts/submissions/
 
 # --- Graficas: SI se versionan ------------------------------------------------

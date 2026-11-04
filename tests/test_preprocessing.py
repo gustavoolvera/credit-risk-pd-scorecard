@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-test_preprocessing.py — Pruebas del pipeline de preprocesamiento
+test_preprocessing.py: Pruebas del pipeline de preprocesamiento
 
 Se ejecuta con:  pytest tests/ -v      (desde la carpeta del proyecto)
 
 QUE PROBAMOS Y POR QUE
 
-No probamos "que el codigo corra" — eso ya lo sabemos. Probamos los
+No probamos "que el codigo corra": eso ya lo sabemos. Probamos los
 INVARIANTES que, si se rompen, producen un modelo que parece funcionar
 pero esta mal:
 
@@ -202,7 +202,7 @@ def test_regresion_peor_atraso_no_traga_centinelas(df_crudo):
     """
     BUG REAL (corregido): peor_atraso se calculaba con comparaciones "> 0".
     Como NaN > 0 es False, las filas con centinela caian en peor_atraso = 0,
-    o sea "sin atrasos" — justo el grupo MAS seguro (2.74% de default),
+    o sea "sin atrasos": justo el grupo MAS seguro (2.74% de default),
     cuando en realidad son el mas peligroso (54.67%).
 
     Su historial es DESCONOCIDO, no cero.

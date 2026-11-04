@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 r"""
-05_train_lightgbm.py — LightGBM sobre los datos crudos
-Proyecto: Give Me Some Credit — Probability of Default
+05_train_lightgbm.py: LightGBM sobre los datos crudos
+Proyecto: Give Me Some Credit: Probability of Default
 
 Usa la MISMA rama 'trees' que XGBoost: valores crudos, NaN nativos y flags.
 
@@ -93,9 +93,9 @@ def auc(modelo, X, y):
 
 
 # =============================================================================
-# PASO 1 — CARGA
+# PASO 1: CARGA
 # =============================================================================
-titulo("PASO 1 — CARGA")
+titulo("PASO 1: CARGA")
 
 train = pd.read_parquet(PROC / "trees" / "train.parquet")
 val = pd.read_parquet(PROC / "trees" / "val.parquet")
@@ -119,9 +119,9 @@ print("  cualquier diferencia de AUC vendra del algoritmo, no del reparto.")
 
 
 # =============================================================================
-# PASO 2 — BASELINE
+# PASO 2: BASELINE
 # =============================================================================
-titulo("PASO 2 — BASELINE (parametros por defecto)")
+titulo("PASO 2: BASELINE (parametros por defecto)")
 
 t0 = time.time()
 base = LGBMClassifier(n_estimators=100, random_state=SEMILLA, n_jobs=-1, verbose=-1)
@@ -145,9 +145,9 @@ print("  (la brecha ajuste/validacion indica que por defecto tambien sobreajusta
 
 
 # =============================================================================
-# PASO 3 — EARLY STOPPING
+# PASO 3: EARLY STOPPING
 # =============================================================================
-titulo("PASO 3 — EARLY STOPPING")
+titulo("PASO 3: EARLY STOPPING")
 
 t0 = time.time()
 es = LGBMClassifier(n_estimators=3000, learning_rate=0.05, num_leaves=31,
@@ -166,9 +166,9 @@ if ref_xgb:
 
 
 # =============================================================================
-# PASO 4 — BUSQUEDA DE HIPERPARAMETROS
+# PASO 4: BUSQUEDA DE HIPERPARAMETROS
 # =============================================================================
-titulo("PASO 4 — BUSQUEDA DE HIPERPARAMETROS")
+titulo("PASO 4: BUSQUEDA DE HIPERPARAMETROS")
 
 # Los parametros clave de LightGBM y su equivalente aproximado en XGBoost:
 #
@@ -234,9 +234,9 @@ for k, v in MEJORES.items():
 
 
 # =============================================================================
-# PASO 5 — MODELO FINAL
+# PASO 5: MODELO FINAL
 # =============================================================================
-titulo("PASO 5 — MODELO FINAL")
+titulo("PASO 5: MODELO FINAL")
 
 modelo = LGBMClassifier(n_estimators=3000, learning_rate=0.05, random_state=SEMILLA,
                         n_jobs=-1, verbose=-1, bagging_freq=1, **MEJORES)
@@ -270,9 +270,9 @@ print(f"\n  Error absoluto medio: {err_cal:.2f} pp   (LogReg {refs['logistic']} 
 
 
 # =============================================================================
-# PASO 6 — IMPORTANCIA DE VARIABLES
+# PASO 6: IMPORTANCIA DE VARIABLES
 # =============================================================================
-titulo("PASO 6 — IMPORTANCIA DE VARIABLES")
+titulo("PASO 6: IMPORTANCIA DE VARIABLES")
 
 imp = pd.DataFrame({"variable": COLS, "gain": modelo.booster_.feature_importance("gain")})
 imp["pct"] = (imp["gain"] / imp["gain"].sum() * 100).round(2)
@@ -281,9 +281,9 @@ print(imp.head(12).to_string(index=False))
 
 
 # =============================================================================
-# PASO 7 — COMPARACION DE LOS TRES MODELOS
+# PASO 7: COMPARACION DE LOS TRES MODELOS
 # =============================================================================
-titulo("PASO 7 — LOS TRES MODELOS, COMPARADOS CON VALIDACION CRUZADA")
+titulo("PASO 7: LOS TRES MODELOS, COMPARADOS CON VALIDACION CRUZADA")
 
 # Un solo split tiene ~±0.003 de ruido: comparar tres modelos con un unico
 # numero cada uno no permite concluir nada. Repetimos con 5 particiones
@@ -355,9 +355,9 @@ for i in range(len(nombres)):
 
 
 # =============================================================================
-# PASO 8 — GRAFICAS Y GUARDADO
+# PASO 8: GRAFICAS Y GUARDADO
 # =============================================================================
-titulo("PASO 8 — GRAFICAS Y GUARDADO")
+titulo("PASO 8: GRAFICAS Y GUARDADO")
 
 fig, axes = plt.subplots(2, 2, figsize=(13, 10))
 
@@ -445,6 +445,6 @@ rej.to_csv(METRICAS / "lightgbm_rejilla.csv", index=False)
 
 
 print("\n" + "=" * 79)
-print(f"LightGBM — AUC validacion = {auc_val:.5f} | "
+print(f"LightGBM: AUC validacion = {auc_val:.5f} | "
       f"CV = {comparativa['LightGBM'].mean():.5f} +/- {comparativa['LightGBM'].std():.5f}")
 print("=" * 79)
